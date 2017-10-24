@@ -1,0 +1,63 @@
+
+SYMBOLS BY NAME
+
+    c000 ISR        _Port1_ISR          
+    c07e CODE       _Radio_Interrupt_Setup
+    c092 CODE       _Radio_SPI_setup    
+    c0d4 CODE       _Radio_Strobe       
+    c0f8 CODE       _Radio_Write_Registers
+    c124 CODE       _Write_RF_Settings  
+    1c00            ___RAM_Address      
+    8000            ___RAM_Size         
+       0            ___begin_IDATA0     
+       0            ___begin_THREAD     
+    1c00            ___begin_UDATA0     
+    c346 CODE       ___debug_io_lock    
+    c348 CODE       ___debug_io_unlock  
+    c2da CODE       ___do_debug_operation
+       0            ___end_IDATA0       
+       0            ___end_THREAD       
+    1c04            ___end_UDATA0       
+    1c02 UDATA0     _dbgCntrlWord       
+    1c00 UDATA0     _dbgCommWord        
+    c30c CODE       _debug_exit         
+    c31e CODE       _debug_printf       
+    c04c CODE       _main               
+    c2ba CODE       _memcpy             
+    c2ca CODE       _memset             
+    c0c6 CODE       _radio_SPI_desel    
+    c0b8 CODE       _radio_SPI_sel      
+    c04c CONST      thread_init_begin   
+    c04c CONST      thread_init_end     
+
+
+SYMBOLS BY VALUE
+
+       0            ___begin_IDATA0     
+       0            ___begin_THREAD     
+       0            ___end_IDATA0       
+       0            ___end_THREAD       
+    1c00            ___RAM_Address      
+    1c00            ___begin_UDATA0     
+    1c00 UDATA0     _dbgCommWord        
+    1c02 UDATA0     _dbgCntrlWord       
+    1c04            ___end_UDATA0       
+    8000            ___RAM_Size         
+    c000 ISR        _Port1_ISR          
+    c04c CONST      thread_init_end     
+    c04c CODE       _main               
+    c04c CONST      thread_init_begin   
+    c07e CODE       _Radio_Interrupt_Setup
+    c092 CODE       _Radio_SPI_setup    
+    c0b8 CODE       _radio_SPI_sel      
+    c0c6 CODE       _radio_SPI_desel    
+    c0d4 CODE       _Radio_Strobe       
+    c0f8 CODE       _Radio_Write_Registers
+    c124 CODE       _Write_RF_Settings  
+    c2ba CODE       _memcpy             
+    c2ca CODE       _memset             
+    c2da CODE       ___do_debug_operation
+    c30c CODE       _debug_exit         
+    c31e CODE       _debug_printf       
+    c346 CODE       ___debug_io_lock    
+    c348 CODE       ___debug_io_unlock  

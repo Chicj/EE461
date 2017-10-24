@@ -1,0 +1,13 @@
+#crossworks backup files
+*.bak
+*.hzs
+
+#build directories
+BUSlib MSP430 Debug/
+BUSlib MSP430 Release/
+BUSlib MSP430 Debug CDH/
+BUSlib MSP430 Release CDH/
+
+#auto generated files
+version.c
+
