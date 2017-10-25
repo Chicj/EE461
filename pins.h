@@ -3,6 +3,7 @@
 #ifndef _PINS_H
 #define _PINS_H
 
+
 #define CLOCK_PINS        (BIT2|BIT5|BIT4)
 #define CLOCK_DIR         P1DIR
 #define CLOCK_SEL0        P1SEL0

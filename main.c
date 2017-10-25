@@ -1,5 +1,6 @@
 #include <__cross_studio_io.h>
 #include <msp430f6779a.h>
+#include <msp430.h>
 #include "radiocmds.h"
 #include "peripheral.h"
 #include "ISR.h"

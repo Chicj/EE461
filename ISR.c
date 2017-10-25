@@ -15,7 +15,7 @@ void Radio_Interrupt_Setup(void){ // Enable RX interrupts only!  TX interrupt en
   P1IE |= CC2500_GDO2|CC2500_GDO0; // Enable GDO0 and GDO2 interrupts
 }
 
-void Port1_ISR (void) __interrupt[PORT1_VECTOR]{
+void  Port1_ISR (void) __interrupt[PORT1_VECTOR]{
     //read P1IV to determine which interrupt happened
     //reading automatically resets the flag for the returned state
     switch(P1IV){

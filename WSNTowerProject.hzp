@@ -1,6 +1,6 @@
 <!DOCTYPE CrossStudio_Project_File>
-<solution Name="Executable_1" target="9" version="2">
-  <project Name="Executable_1">
+<solution Name="WSNTowerProject" target="9" version="2">
+  <project Name="WSNTowerProject">
     <configuration
       Name="Common"
       Platform="MSP430"
@@ -15,13 +15,9 @@
     <folder Name="Source Files">
       <configuration Name="Common" filter="c;h;s;asm;inc;s43" />
       <file file_name="main.c" />
-      <file file_name="pins.h" />
       <file file_name="ISR.c" />
-      <file file_name="ISR.h" />
       <file file_name="peripheral.c" />
-      <file file_name="peripheral.h" />
       <file file_name="radiocmds.c" />
-      <file file_name="radiocmds.h" />
     </folder>
     <folder Name="System Files">
       <configuration Name="Common" filter="xml" />
