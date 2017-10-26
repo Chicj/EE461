@@ -1,9 +1,10 @@
 #include <__cross_studio_io.h>
-#include <msp430f6779a.h>
+#include <msp430f5438a.h>
 #include <msp430.h>
 #include "radiocmds.h"
 #include "peripheral.h"
 #include "ISR.h"
+#include "pins.h"
 
 
 
@@ -14,8 +15,8 @@ void main(void){
   P7DIR |= 0xFF;
   P7OUT |= BIT0;
 
-  debug_printf("WSN project\n");
-  debug_exit(0);
+
+
 
   // all setup functions could be bundled later.... 
   Radio_SPI_setup();
@@ -26,8 +27,6 @@ void main(void){
 
   _EINT();  // set global IR enable 
 //  WDT_KICK(); 
-
-  // Sending a dummy packet (BTW, the buffer size is 64 bytes)
   
   LPM0;
 }

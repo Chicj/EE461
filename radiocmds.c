@@ -1,4 +1,4 @@
-#include <msp430f6779a.h>
+#include <msp430f5438a.h>
 #include "radiocmds.h"
 
 /*

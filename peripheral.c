@@ -1,4 +1,4 @@
-#include <msp430f6779a.h>
+#include <msp430f5438a.h>
 #include "peripheral.h"
 #include "radiocmds.h"
 
@@ -28,7 +28,7 @@ void Radio_SPI_setup(void){
   radio_SPI_desel();                 // Ensure CS for CC1101 is disabled
 
   //Set pins for SPI usage
-  P4SEL0 |= RADIO_PINS_SPI;
+  //P4SEL0 |= RADIO_PINS_SPI;
 }
 
 
