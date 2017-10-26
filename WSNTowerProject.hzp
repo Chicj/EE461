@@ -10,7 +10,8 @@
       linker_section_placement_file="$(StudioDir)/targets/section_placement_info_abcd_iv64.xml"
       msp430_identify_string="MSP430F5438A"
       msp430_insn_set="MSP430X"
-      msp430_memory_size="1M" project_directory=""
+      msp430_memory_size="1M"
+      project_directory=""
       project_type="Executable" />
     <folder Name="Source Files">
       <configuration Name="Common" filter="c;h;s;asm;inc;s43" />
@@ -18,6 +19,7 @@
       <file file_name="ISR.c" />
       <file file_name="peripheral.c" />
       <file file_name="radiocmds.c" />
+      <file file_name="IncrementVcore.c" />
     </folder>
     <folder Name="System Files">
       <configuration Name="Common" filter="xml" />
