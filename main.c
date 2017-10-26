@@ -5,7 +5,11 @@
 #include "peripheral.h"
 #include "ISR.h"
 
+
+
 void main(void){
+
+
   //set all LED pins DIR/ turn on a LED
   P7DIR |= 0xFF;
   P7OUT |= BIT0;
@@ -22,5 +26,8 @@ void main(void){
 
   _EINT();  // set global IR enable 
 //  WDT_KICK(); 
+
+  // Sending a dummy packet (BTW, the buffer size is 64 bytes)
+  
   LPM0;
 }

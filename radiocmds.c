@@ -158,12 +158,15 @@ void TI_CC_Wait(unsigned int cycles){
     cycles = cycles - 6;                    // 6 cycles consumed each iteration
 }
 
-void RF_Send_Packet(unsigned char *TxBuffer, int size)
-{
-  Radio_Write_Registers(TI_CCxxx0_PKTLEN, size);
-  Radio_Write_Burst_Registers(TI_CCxxx0_TXFIFO, TxBuffer, size); // Write TX data
-  Radio_Strobe(TI_CCxxx0_STX);                                   // Change state to TX, initiate data transfer
-  //Tx_Flag = 1;                                                   //NOTE setting the Tx flag hight will indicate a transmission in progress
+void send_dummy(void){
+  unsigned char DummyBuffer[18] = {0x7E, 0x7E, 0x7E, 0x7E, 0x7E, 0x7E, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0x7E, 0x7E, 0x7E, 0x7E, 0x7E, 0x7E};
+  unsigned int DummyBufferLength = sizeof(DummyBuffer);
+
+  Radio_Write_Registers(TI_CCxxx0_PKTLEN, DummyBufferLength);  // Pre-program packet length
+  Radio_Write_Registers(TI_CCxxx0_PKTCTRL0, 0x00);         // Fixed byte mode
+  Radio_Write_Burst_Registers(TI_CCxxx0_TXFIFO, DummyBuffer, DummyBufferLength); // Write TX data
+
+  Radio_Strobe(TI_CCxxx0_STX);
 }
 
 void Write_RF_Settings(void)
