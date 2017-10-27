@@ -6,6 +6,11 @@
 //******************************************** SPI stuff 
 
 void Radio_SPI_setup(void);
+//******************************************** Clock stuff
+#define TOTALCOUNT 125
+
+ void ClockSetUp(void);
+ int IncrementVcore(void);
 
 //******************************************** UART stuff
 

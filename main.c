@@ -19,6 +19,7 @@ void main(void){
 
 
   // all setup functions could be bundled later.... 
+  ClockSetUp();
   Radio_SPI_setup();
   Write_RF_Settings();                
   Radio_Interrupt_Setup();
