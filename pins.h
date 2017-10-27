@@ -1,4 +1,9 @@
-// This will be the file to define existing pins on the dev. board
+/**********************************************************************************************
+* EE 641 Project - Wireless Sensor Network                                                    *
+* Authors: Chic O'Dell, Justin Long, Rowshon Munny                                            *
+*                                                                                             *
+* Description: pins.h is the header file to set all pins on the microcontroller and radio     *
+***********************************************************************************************/
 
 #ifndef _PINS_H
 #define _PINS_H
@@ -11,20 +16,21 @@
 // UCA2 Pins for radio
 #define UART_TX_PIN       BIT4
 #define UART_RX_PIN       BIT5
-#define UART_TX_PIN_NUM   4                           // P9.4
-#define UART_RX_PIN_NUM   5                           // P9.5
+#define UART_TX_PIN_NUM   4                           // TX = P9.4
+#define UART_RX_PIN_NUM   5                           // RX = P9.5
 #define UART_PINS         (UART_RX_PIN|UART_TX_PIN)
 #define UART_PORT         9                           // P9
 
-// UCBO P3 Serial pins for radio SPI 
-#define RADIO_PIN_SIMO BIT1 
-#define RADIO_PIN_SOMI BIT2 
-#define RADIO_PIN_ClK  BIT3
-
-//P5.5 this is the chip select for the SPI bus
-#define CS_CC2500      BIT0   //P3.0
-
+// UCB0 P3 Serial pins for radio SPI 
+#define RADIO_PIN_SIMO BIT1                           // SIMO = P3.1
+#define RADIO_PIN_SOMI BIT2                           // SOMI = P3.2
+#define RADIO_PIN_ClK  BIT3                           // CLK = P3.3
+#define CS_CC2500      BIT0                           // CS = P3.0
 #define RADIO_PINS_SPI (RADIO_PIN_SOMI | RADIO_PIN_SIMO | RADIO_PIN_ClK)
+
+// Radio interrupt pins
+#define CC2500_GDO0       BIT7                        // GDO0 = P1.7 (RX)  
+#define CC2500_GDO2       BIT3                        // GDO2 = P1.3 (TX)
 
 #endif
 

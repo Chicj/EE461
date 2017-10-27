@@ -1,6 +1,14 @@
+/**********************************************************************************************
+* EE 641 Project - Wireless Sensor Network                                                    *
+* Authors: Chic O'Dell, Justin Long, Rowshon Munny                                            *
+*                                                                                             *
+* Description: ISR.c will contain interrupt service routines for the microcontroller          *
+***********************************************************************************************/
+
 #include <msp430f5438a.h>
 #include "ISR.h"
 #include "radiocmds.h"
+#include "pins.h"
 
 /*
  Will contain all interrupt code

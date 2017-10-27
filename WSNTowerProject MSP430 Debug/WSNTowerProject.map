@@ -1,14 +1,14 @@
 
 SYMBOLS BY NAME
 
-    5c90 CODE       _ClockSetUp         
-    5ee2 CODE       _IncrementVcore     
+    5c90 CODE       _Clock_Setup        
+    5ef2 CODE       _IncrementVcore     
     5c00 ISR        _Port1_ISR          
     5c58 CODE       _Radio_Interrupt_Setup
     5c6c CODE       _Radio_SPI_setup    
-    5cfc CODE       _Radio_Strobe       
-    5d20 CODE       _Radio_Write_Registers
-    5d4c CODE       _Write_RF_Settings  
+    5d0c CODE       _Radio_Strobe       
+    5d30 CODE       _Radio_Write_Registers
+    5d5c CODE       _Write_RF_Settings  
     1c00            ___RAM_Address      
     4000            ___RAM_Size         
        0            ___begin_IDATA0     
@@ -18,10 +18,10 @@ SYMBOLS BY NAME
        0            ___end_THREAD       
        0            ___end_UDATA0       
     5c30 CODE       _main               
-    5f84 CODE       _memcpy             
-    5f94 CODE       _memset             
-    5cf2 CODE       _radio_SPI_desel    
-    5ce8 CODE       _radio_SPI_sel      
+    5f94 CODE       _memcpy             
+    5fa4 CODE       _memset             
+    5d02 CODE       _radio_SPI_desel    
+    5cf8 CODE       _radio_SPI_sel      
     5c30 CONST      thread_init_begin   
     5c30 CONST      thread_init_end     
 
@@ -42,12 +42,12 @@ SYMBOLS BY VALUE
     5c30 CONST      thread_init_begin   
     5c58 CODE       _Radio_Interrupt_Setup
     5c6c CODE       _Radio_SPI_setup    
-    5c90 CODE       _ClockSetUp         
-    5ce8 CODE       _radio_SPI_sel      
-    5cf2 CODE       _radio_SPI_desel    
-    5cfc CODE       _Radio_Strobe       
-    5d20 CODE       _Radio_Write_Registers
-    5d4c CODE       _Write_RF_Settings  
-    5ee2 CODE       _IncrementVcore     
-    5f84 CODE       _memcpy             
-    5f94 CODE       _memset             
+    5c90 CODE       _Clock_Setup        
+    5cf8 CODE       _radio_SPI_sel      
+    5d02 CODE       _radio_SPI_desel    
+    5d0c CODE       _Radio_Strobe       
+    5d30 CODE       _Radio_Write_Registers
+    5d5c CODE       _Write_RF_Settings  
+    5ef2 CODE       _IncrementVcore     
+    5f94 CODE       _memcpy             
+    5fa4 CODE       _memset             

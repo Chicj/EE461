@@ -1,29 +1,16 @@
-// This will be the file to define existing pin connections 
+/**********************************************************************************************
+* EE 641 Project - Wireless Sensor Network                                                    *
+* Authors: Chic O'Dell, Justin Long, Rowshon Munny                                            *
+*                                                                                             *
+* Description: radiocmds.h is the header file to set declarations for radiocmds.c             *
+***********************************************************************************************/
 
+/************************************ Declarations *******************************************/
 #ifndef _RADIOCMDS_H
 #define _RADIOCMDS_H
 
-//crystal frequency for radio CC2500
-#define RF_OSC_F 26000000
-
-// radio state definition 
-#define IDLE         0
-#define TX_START     1
-#define TX_RUNNING   2
-#define TX_END       3
-#define RX_START     4
-#define RX_RUNNING   5
-
-// Radio interrupt pins
-#define CC2500_GDO0       BIT7  //P1.7  
-#define CC2500_GDO2       BIT3  //P1.3
-
 // Transmit power settings
 enum power_level{power1=-55,power2=-30, power3= -28, power4 = -26, power5 = -24, power6 =-22, power7=-20, power8=-18, power9=-16,power10=-14,power11=12, power12=-10, power13=-8, power14=-6, power15=-4, power16=-2, power17=0, power18=1};
-
-//Create event flags for the radios
-#define TxThrBytes 30   
-#define RxThrBytes 30
 
 // function list
 void radio_SPI_sel(void);
@@ -36,92 +23,15 @@ void Radio_Write_Registers(char addr, char value);
 void Radio_Write_Burst_Registers(char,unsigned char *, int);
 void Reset_Radio(void);
 void TI_CC_Wait(unsigned int);
-void RF_Send_Packet(unsigned char *txBuffer, int size);
+void Send_Dummy(void);
 void Write_RF_Settings(void); 
 
-// extern these so they can be used across the project 
+// TODO Explain to Justin why this is necessary. Doesn't include take care of this?
+// External variables to be used across the project
 extern unsigned char Tx1Buffer[], RxBuffer[];
 extern unsigned int Tx1Buffer_Len, TxBufferPos, TxBytesRemaining, RxBuffer_Len,  RxBufferPos, RxBytesRemaining, state;
 
-/*
-                                .do-"""""'-o..                         
-                             .o""            ""..                       
-                           ,,''                 ``b.                   
-                          d'                      ``b                   
-                         d`d:                       `b.                 
-                        ,,dP                         `Y.               
-                       d`88                           `8.               
- ooooooooooooooooood888`88'                            `88888888888bo, 
-d"""    `""""""""""""Y:d8P                              8,          `b 
-8                    P,88b                             ,`8           8 
-8                   ::d888,                           ,8:8.          8 
-:                   dY88888                           `' ::          8 
-:                   8:8888                               `b          8 
-:                   Pd88P',...                     ,d888o.8          8 
-:                   :88'dd888888o.                d8888`88:          8 
-:                  ,:Y:d8888888888b             ,d88888:88:          8 
-:                  :::b88d888888888b.          ,d888888bY8b          8 
-                    b:P8;888888888888.        ,88888888888P          8 
-                    8:b88888888888888:        888888888888'          8 
-                    8:8.8888888888888:        Y8888888888P           8 
-,                   YP88d8888888888P'          ""888888"Y            8 
-:                   :bY8888P"""""''                     :            8 
-:                    8'8888'                            d            8 
-:                    :bY888,                           ,P            8 
-:                     Y,8888           d.  ,-         ,8'            8 
-:                     `8)888:           '            ,P'             8 
-:                      `88888.          ,...        ,P               8 
-:                       `Y8888,       ,888888o     ,P                8 
-:                         Y888b      ,88888888    ,P'                8 
-:                          `888b    ,888888888   ,,'                 8 
-:                           `Y88b  dPY888888OP   :'                  8 
-:                             :88.,'.   `' `8P-"b.                   8 
-:.                             )8P,   ,b '  -   ``b                  8 
-::                            :':   d,'d`b, .  - ,db                 8 
-::                            `b. dP' d8':      d88'                 8 
-::                             '8P" d8P' 8 -  d88P'                  8 
-::                            d,' ,d8'  ''  dd88'                    8 
-::                           d'   8P'  d' dd88'8                     8 
- :                          ,:   `'   d:ddO8P' `b.                   8 
- :                  ,dooood88: ,    ,d8888""    ```b.                8 
- :               .o8"'""""""Y8.b    8 `"''    .o'  `"""ob.           8 
- :              dP'         `8:     K       dP''        "`Yo.        8 
- :             dP            88     8b.   ,d'              ``b       8 
- :             8.            8P     8""'  `"                 :.      8 
- :            :8:           :8'    ,:                        ::      8 
- :            :8:           d:    d'                         ::      8 
- :            :8:          dP   ,,'                          ::      8 
- :            `8:     :b  dP   ,,                            ::      8 
- :            ,8b     :8 dP   ,,                             d       8 
- :            :8P     :8dP    d'                       d     8       8 
- :            :8:     d8P    d'                      d88    :P       8 
- :            d8'    ,88'   ,P                     ,d888    d'       8 
- :            88     dP'   ,P                      d8888b   8        8 
- '           ,8:   ,dP'    8.                     d8''88'  :8        8 
-             :8   d8P'    d88b                   d"'  88   :8        8 
-             d: ,d8P'    ,8P""".                      88   :P        8 
-             8 ,88P'     d'                           88   ::        8 
-            ,8 d8P       8                            88   ::        8 
-            d: 8P       ,:  -hrr-                    :88   ::        8 
-            8',8:,d     d'                           :8:   ::        8 
-           ,8,8P'8'    ,8                            :8'   ::        8 
-           :8`' d'     d'                            :8    ::        8 
-           `8  ,P     :8                             :8:   ::        8 
-            8, `      d8.                            :8:   8:        8 
-            :8       d88:                            d8:   8         8 
- ,          `8,     d8888                            88b   8         8 
- :           88   ,d::888                            888   Y:        8 
- :           YK,oo8P :888                            888.  `b        8 
- :           `8888P  :888:                          ,888:   Y,       8 
- :            ``'"   `888b                          :888:   `b       8 
- :                    8888                           888:    ::      8 
- :                    8888:                          888b     Y.     8, 
- :                    8888b                          :888     `b     8: 
- :                    88888.                         `888,     Y     8: 
- ``ob...............--"""""'----------------------`""""""""'"""`'"""""
-*/
-
-//Definitions for configuration Registers CC2500 Registers
+/******************************** Radio Registers *****************************************/
 #define TI_CCxxx0_IOCFG2       0x00        // GDO2 output pin configuration
 #define TI_CCxxx0_IOCFG1       0x01        // GDO1 output pin configuration
 #define TI_CCxxx0_IOCFG0       0x02        // GDO0 output pin configuration
@@ -218,5 +128,82 @@ d"""    `""""""""""""Y:d8P                              8,          `b
 extern char paTable_CC2500[];
 extern char paTableLen;
 
-
 #endif
+
+/*
+                                .do-"""""'-o..                         
+                             .o""            ""..                       
+                           ,,''                 ``b.                   
+                          d'                      ``b                   
+                         d`d:                       `b.                 
+                        ,,dP                         `Y.               
+                       d`88                           `8.               
+ ooooooooooooooooood888`88'                            `88888888888bo, 
+d"""    `""""""""""""Y:d8P                              8,          `b 
+8                    P,88b                             ,`8           8 
+8                   ::d888,                           ,8:8.          8 
+:                   dY88888                           `' ::          8 
+:                   8:8888                               `b          8 
+:                   Pd88P',...                     ,d888o.8          8 
+:                   :88'dd888888o.                d8888`88:          8 
+:                  ,:Y:d8888888888b             ,d88888:88:          8 
+:                  :::b88d888888888b.          ,d888888bY8b          8 
+                    b:P8;888888888888.        ,88888888888P          8 
+                    8:b88888888888888:        888888888888'          8 
+                    8:8.8888888888888:        Y8888888888P           8 
+,                   YP88d8888888888P'          ""888888"Y            8 
+:                   :bY8888P"""""''                     :            8 
+:                    8'8888'                            d            8 
+:                    :bY888,                           ,P            8 
+:                     Y,8888           d.  ,-         ,8'            8 
+:                     `8)888:           '            ,P'             8 
+:                      `88888.          ,...        ,P               8 
+:                       `Y8888,       ,888888o     ,P                8 
+:                         Y888b      ,88888888    ,P'                8 
+:                          `888b    ,888888888   ,,'                 8 
+:                           `Y88b  dPY888888OP   :'                  8 
+:                             :88.,'.   `' `8P-"b.                   8 
+:.                             )8P,   ,b '  -   ``b                  8 
+::                            :':   d,'d`b, .  - ,db                 8 
+::                            `b. dP' d8':      d88'                 8 
+::                             '8P" d8P' 8 -  d88P'                  8 
+::                            d,' ,d8'  ''  dd88'                    8 
+::                           d'   8P'  d' dd88'8                     8 
+ :                          ,:   `'   d:ddO8P' `b.                   8 
+ :                  ,dooood88: ,    ,d8888""    ```b.                8 
+ :               .o8"'""""""Y8.b    8 `"''    .o'  `"""ob.           8 
+ :              dP'         `8:     K       dP''        "`Yo.        8 
+ :             dP            88     8b.   ,d'              ``b       8 
+ :             8.            8P     8""'  `"                 :.      8 
+ :            :8:           :8'    ,:                        ::      8 
+ :            :8:           d:    d'                         ::      8 
+ :            :8:          dP   ,,'                          ::      8 
+ :            `8:     :b  dP   ,,                            ::      8 
+ :            ,8b     :8 dP   ,,                             d       8 
+ :            :8P     :8dP    d'                       d     8       8 
+ :            :8:     d8P    d'                      d88    :P       8 
+ :            d8'    ,88'   ,P                     ,d888    d'       8 
+ :            88     dP'   ,P                      d8888b   8        8 
+ '           ,8:   ,dP'    8.                     d8''88'  :8        8 
+             :8   d8P'    d88b                   d"'  88   :8        8 
+             d: ,d8P'    ,8P""".                      88   :P        8 
+             8 ,88P'     d'                           88   ::        8 
+            ,8 d8P       8                            88   ::        8 
+            d: 8P       ,:  -hrr-                    :88   ::        8 
+            8',8:,d     d'                           :8:   ::        8 
+           ,8,8P'8'    ,8                            :8'   ::        8 
+           :8`' d'     d'                            :8    ::        8 
+           `8  ,P     :8                             :8:   ::        8 
+            8, `      d8.                            :8:   8:        8 
+            :8       d88:                            d8:   8         8 
+ ,          `8,     d8888                            88b   8         8 
+ :           88   ,d::888                            888   Y:        8 
+ :           YK,oo8P :888                            888.  `b        8 
+ :           `8888P  :888:                          ,888:   Y,       8 
+ :            ``'"   `888b                          :888:   `b       8 
+ :                    8888                           888:    ::      8 
+ :                    8888:                          888b     Y.     8, 
+ :                    8888b                          :888     `b     8: 
+ :                    88888.                         `888,     Y     8: 
+ ``ob...............--"""""'----------------------`""""""""'"""`'"""""
+*/
