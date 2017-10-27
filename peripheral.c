@@ -1,6 +1,7 @@
 #include <msp430f5438a.h>
 #include "peripheral.h"
 #include "radiocmds.h"
+#include "pins.h"
 
 /* Will contain all peripheral code 
  eUSCI_A2 is hardwired to the CP2102 and therefore should not be used for anything other then UART to serial connection
@@ -12,23 +13,23 @@
 //radio connection SPI setup
 void Radio_SPI_setup(void){
 //Radio SPI on P4: P4.2=UCB1SIMO, P4.1=USB1SOMI, P4.0=UCB1CLK
-  UCB1CTLW0 |= UCSWRST;                           // Put UCB1 into reset
-  UCB1CTLW0  = UCCKPH|UCMSB|UCMST|UCMODE_0|UCSYNC|UCSSEL_2|UCSWRST;  // Data Read/Write on Rising Edge
+  UCB0CTLW0 |= UCSWRST;                           // Put UCB1 into reset
+  UCB0CTLW0  = UCCKPH|UCMSB|UCMST|UCMODE_0|UCSYNC|UCSSEL_2|UCSWRST;  // Data Read/Write on Rising Edge
                                                   // MSB first, Master mode, 3-pin SPI
                                                   // Synchronous mode
                                                   // SMCLK
-  UCB1BRW = 16;                                   // Set frequency divider so SPI runs at 16/16 = 1 MHz
-  UCB1CTLW0 &= ~UCSWRST;  //Bring UCB1 out of reset state
+  UCB0BRW = 16;                                   // Set frequency divider so SPI runs at 16/16 = 1 MHz
+  UCB0CTLW0 &= ~UCSWRST;  //Bring UCB1 out of reset state
  
 // ************************************************* PIN setup 
-  //Radio CS P5.1=CC2500_CS_1 (ENABLE1), P5.2=CC2500_CS_2 (ENABLE2), 
+  //Radio CS P3.0=CC2500_CS (ENABLE1) 
   //Initial state for CS is High, CS pulled low to initiate SPI
-  P5DIR |= CS_CC2500;                     //Set output for CC2500_1 CS
-
-  radio_SPI_desel();                 // Ensure CS for CC1101 is disabled
+  P3DIR |= CS_CC2500;                     //Set output for CC2500_1 CS
+  
+  radio_SPI_desel();                 // Ensure CS for CC2500 is disabled
 
   //Set pins for SPI usage
-  //P4SEL0 |= RADIO_PINS_SPI;
+  P3SEL |= RADIO_PINS_SPI;
 }
 
 

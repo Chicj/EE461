@@ -1,6 +1,6 @@
 #include <msp430f5438a.h>
 #include "radiocmds.h"
-
+#include "pins.h"
 /*
 This file will contain all functions necessary for the function of the CC2500 radio.
 Any NOTE<-- will show up in yellow or TODO <-- shown in red indicates important information about the functionality of the command.
@@ -14,14 +14,14 @@ unsigned int Tx1Buffer_Len, TxBufferPos=0, TxBytesRemaining, RxBuffer_Len=0, RxB
 
 // select CS lines for SPI
 void radio_SPI_sel(void){        
-     P7DIR = CS_CC2500;
-     P5OUT &= ~CS_CC2500;     // CS enable CC2500
+     P3DIR &= ~CS_CC2500;
+     P3OUT &= ~CS_CC2500;     // CS enable CC2500
 }
 
 // de-select CS lines for SPI
 void radio_SPI_desel(void){     
-     P7DIR = CS_CC2500;
-     P5OUT |= CS_CC2500;    // CS de-select CC2500
+     P3DIR |= CS_CC2500;
+     P3OUT |= CS_CC2500;    // CS de-select CC2500
 }
 
 // read a radio register 
