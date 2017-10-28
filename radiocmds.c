@@ -6,6 +6,7 @@
 ***********************************************************************************************/
 
 #include <msp430f5438a.h>
+#include <msp430.h>
 #include "radiocmds.h"
 #include "pins.h"
 
@@ -32,12 +33,12 @@ char Radio_Read_Registers(char addr){
     
   radio_SPI_sel ();                             // set SPI CS
  
-  while (!(UCB1IFG & UCTXIFG));                 // Wait for TXBUF ready
-  UCB1TXBUF = (addr | TI_CCxxx0_READ_SINGLE);   // Adding 0x80 to address tells the radio to read a single byte
-  while (!(UCB1IFG & UCTXIFG));                 // Wait for TXBUF ready
-  UCB1TXBUF = 0;                                // Dummy write so we can read data
-  while (UCB1STAT & UCBUSY);                    // Wait for TX to complete
-  x = UCB1RXBUF;                                // Read data`
+  while (!(UCB0IFG & UCTXIFG));                 // Wait for TXBUF ready
+  UCB0TXBUF = (addr | TI_CCxxx0_READ_SINGLE);   // Adding 0x80 to address tells the radio to read a single byte
+  while (!(UCB0IFG & UCTXIFG));                 // Wait for TXBUF ready
+  UCB0TXBUF = 0;                                // Dummy write so we can read data
+  while (UCB0STAT & UCBUSY);                    // Wait for TX to complete
+  x = UCB0RXBUF;                                // Read data`
 
   radio_SPI_desel();                            // de-select SPI CS
 
@@ -50,22 +51,22 @@ void Radio_Read_Burst_Registers(char addr, unsigned char *buffer, int count){
 
   radio_SPI_sel (); // set SPI CS
 
-  while (!(UCB1IFG & UCTXIFG));                 // Wait for TXBUF ready
-  UCB1TXBUF = (addr | TI_CCxxx0_READ_BURST);    // Adding 0xC0 to address tells the radio to read multiple bytes
-  while (UCB1STAT & UCBUSY);                    // Wait for TX to complete
-  UCB1TXBUF = 0;                                // Dummy write to read 1st data byte
+  while (!(UCB0IFG & UCTXIFG));                 // Wait for TXBUF ready
+  UCB0TXBUF = (addr | TI_CCxxx0_READ_BURST);    // Adding 0xC0 to address tells the radio to read multiple bytes
+  while (UCB0STAT & UCBUSY);                    // Wait for TX to complete
+  UCB0TXBUF = 0;                                // Dummy write to read 1st data byte
                                                 // Addr byte is now being TX'ed, with dummy byte to follow immediately after
-  UCB1IFG &= ~UCRXIFG;                          // Clear flag
-  while (!(UCB1IFG & UCRXIFG));                 // Wait for end of 1st data byte TX
+  UCB0IFG &= ~UCRXIFG;                          // Clear flag
+  while (!(UCB0IFG & UCRXIFG));                 // Wait for end of 1st data byte TX
                                                 // First data byte now in RXBUF
   for (i = 0; i < (count-1); i++)
   {
-    UCB1TXBUF = 0;                              //Initiate next data RX, meanwhile..
-    buffer[i] = UCB1RXBUF;                      //NOTE Store data from last data RX... need to print buffer to be able to see this ! 
-    while (!(UCB1IFG & UCRXIFG));               // Wait for RX to finish
+    UCB0TXBUF = 0;                              //Initiate next data RX, meanwhile..
+    buffer[i] = UCB0RXBUF;                      //NOTE Store data from last data RX... need to print buffer to be able to see this ! 
+    while (!(UCB0IFG & UCRXIFG));               // Wait for RX to finish
   }
   
-  buffer[count-1] = UCB1RXBUF;                  // Store last RX byte in buffer
+  buffer[count-1] = UCB0RXBUF;                  // Store last RX byte in buffer
   
   radio_SPI_desel();                            // de-select SPI CS
 }
@@ -76,12 +77,12 @@ char Radio_Read_Status(char addr){
 
   radio_SPI_sel (); // set SPI CS
 
-  while (!(UCB1IFG & UCTXIFG));                 // Wait for TXBUF ready
-  UCB1TXBUF = (addr | TI_CCxxx0_READ_BURST);    // Send address
-  while (!(UCB1IFG & UCTXIFG));                 // Wait for TXBUF ready
-  UCB1TXBUF = 0;                                // Dummy write so we can read data
-  while (UCB1STAT & UCBUSY);                    // Wait for TX to complete
-  status = UCB1RXBUF;                           // Read data
+  while (!(UCB0IFG & UCTXIFG));                 // Wait for TXBUF ready
+  UCB0TXBUF = (addr | TI_CCxxx0_READ_BURST);    // Send address
+  while (!(UCB0IFG & UCTXIFG));                 // Wait for TXBUF ready
+  UCB0TXBUF = 0;                                // Dummy write so we can read data
+  while (UCB0STAT & UCBUSY);                    // Wait for TX to complete
+  status = UCB0RXBUF;                           // Read data
 
   radio_SPI_desel();                            // de-select SPI CS
 
@@ -95,11 +96,11 @@ char Radio_Strobe(char strobe){
 
   radio_SPI_sel ();                             // set SPI CS
 
-  while (!(UCB1IFG & UCTXIFG));                 // Wait for TXBUF ready
-  UCB1TXBUF = strobe;                           // Send strobe
+  while (!(UCB0IFG & UCTXIFG));                 // Wait for TXBUF ready
+  UCB0TXBUF = strobe;                           // Send strobe
                                                 // Strobe addr is now being TX'ed
-  while (UCB1STAT & UCBUSY);                    // Wait for TX to complete
-  status = UCB1RXBUF;                           // Read data
+  while (UCB0STAT & UCBUSY);                    // Wait for TX to complete
+  status = UCB0RXBUF;                           // Read data
 
   radio_SPI_desel();                            // de-select SPI CS
 }
@@ -108,11 +109,11 @@ char Radio_Strobe(char strobe){
 void Radio_Write_Registers(char addr, char value){
   radio_SPI_sel ();                 // set SPI CS
 
-  while (!(UCB1IFG & UCTXIFG));                 // Wait for TXBUF ready
-  UCB1TXBUF = addr;                             // Send address
-  while (!(UCB1IFG & UCTXIFG));                 // Wait for TXBUF ready
-  UCB1TXBUF = value;                            // Send data
-  while (UCB1STAT & UCBUSY);                    // Wait for TX to complete
+  while (!(UCB0IFG & UCTXIFG));                 // Wait for TXBUF ready
+  UCB0TXBUF = addr;                             // Send address
+  while (!(UCB0IFG & UCTXIFG));                 // Wait for TXBUF ready
+  UCB0TXBUF = value;                            // Send data
+  while (UCB0STAT & UCBUSY);                    // Wait for TX to complete
 
   radio_SPI_desel();                            // de-select SPI CS
 }
@@ -123,39 +124,39 @@ void Radio_Write_Burst_Registers(char addr, unsigned char *buffer, int count){
 
   radio_SPI_sel ();                             // set SPI CS
   
-  while (!(UCB1IFG & UCTXIFG));                 // Wait for TXBUF ready
-  UCB1TXBUF = addr | TI_CCxxx0_WRITE_BURST;     // Adding 0x40 to address tells radio to perform burst write rather than single byte write
+  while (!(UCB0IFG & UCTXIFG));                 // Wait for TXBUF ready
+  UCB0TXBUF = addr | TI_CCxxx0_WRITE_BURST;     // Adding 0x40 to address tells radio to perform burst write rather than single byte write
 
   for (i = 0; i < count; i++)
   {
-    while (!(UCB1IFG & UCTXIFG));               // Wait for TXBUF ready
-    UCB1TXBUF = buffer[i];                      // Send data
+    while (!(UCB0IFG & UCTXIFG));               // Wait for TXBUF ready
+    UCB0TXBUF = buffer[i];                      // Send data
   }
 
-  while (UCB1STAT & UCBUSY);                    // Wait for TX to complete
+  while (UCB0STAT & UCBUSY);                    // Wait for TX to complete
   
   radio_SPI_desel();                            // de-select SPI CS
 }
 
 // Function to power cycle the radio
 void Reset_Radio(void){
-  P5DIR |= CS_CC2500;
-  P5OUT |= CS_CC2500;                           // Toggle CS with delays to power up radio
+  P3DIR |= CS_CC2500;
+  P3OUT |= CS_CC2500;                           // Toggle CS with delays to power up radio
   TI_CC_Wait(30);
-  P5DIR &= ~CS_CC2500;
-  P5OUT &= ~CS_CC2500;
+  P3DIR &= ~CS_CC2500;
+  P3OUT &= ~CS_CC2500;
   TI_CC_Wait(30);
-  P5DIR |= CS_CC2500;
-  P5OUT |= CS_CC2500;
+  P3DIR |= CS_CC2500;
+  P3OUT |= CS_CC2500;
   TI_CC_Wait(45);
-  P5DIR &= ~CS_CC2500;
-  P5OUT &= ~CS_CC2500;                          // CS enable
-  while (!(UCB1IFG & UCTXIFG));                 // Wait for TXBUF ready
-  UCB1TXBUF = TI_CCxxx0_SRES;                   // Send strobe
+  P3DIR &= ~CS_CC2500;
+  P3OUT &= ~CS_CC2500;                          // CS enable
+  while (!(UCB0IFG & UCTXIFG));                 // Wait for TXBUF ready
+  UCB0TXBUF = TI_CCxxx0_SRES;                   // Send strobe
                                                 // Strobe addr is now being TX'ed
-  while (UCB1STAT & UCBUSY);                    // Wait for TX to complete
-  P5DIR |= CS_CC2500;
-  P5OUT |= CS_CC2500;                           // CS disable
+  while (UCB0STAT & UCBUSY);                    // Wait for TX to complete
+  P3DIR |= CS_CC2500;
+  P3OUT |= CS_CC2500;                           // CS disable
 
   P1IFG = 0;                                    // Clear flags that were set 
 }

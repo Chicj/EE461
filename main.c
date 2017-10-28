@@ -16,7 +16,7 @@
 
 
 void main(void){
-
+  WDTCTL = WDTPW + WDTHOLD;
 
   // Set LED pin DIR
   P1DIR |= 0xFF;
@@ -26,14 +26,21 @@ void main(void){
 
   // Setup Functions
   Clock_Setup();
+
   Radio_SPI_setup();
+  Reset_Radio();
+  __delay_cycles(800);                   // Wait for radio to be ready before writing registers.cc2500.pdf Table 13 indicates a power-on start-up time of 150 us for the crystal to be stable
   Write_RF_Settings();                
   Radio_Interrupt_Setup();
   Radio_Strobe(TI_CCxxx0_SRX);          //Initialize CC2500 in Rx mode
 
+ // NOTE This is for testing
+  for(;;){
+ // Radio_Read_Registers(0x26);
+   Send_Dummy ();
+      __delay_cycles(800);                   // Wait for radio to be ready before writing registers.cc2500.pdf Table 13 indicates a power-on start-up time of 150 us for the crystal to be stable
+  }
   //TODO explain this part to Justin
-  _EINT();  // set global IR enable 
-//  WDT_KICK(); 
-  
-  LPM0;
+  //_EINT();  // set global IR enable 
+  //LPM0;
 }

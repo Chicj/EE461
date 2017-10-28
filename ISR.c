@@ -6,6 +6,7 @@
 ***********************************************************************************************/
 
 #include <msp430f5438a.h>
+#include <msp430.h>
 #include "ISR.h"
 #include "radiocmds.h"
 #include "pins.h"

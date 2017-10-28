@@ -6,22 +6,22 @@
 ***********************************************************************************************/
 
 #include <msp430f5438a.h>
+#include <msp430.h>
 #include "peripheral.h"
 #include "radiocmds.h"
 #include "pins.h"
 
 /******************************************* SPI  Setup ***************************************/
 
-//TODO Explain this to Justin
 //Function for radio connection SPI setup
 void Radio_SPI_setup(void){
-
+  unsigned short x;
   UCB0CTLW0 |= UCSWRST;                                             // Put UCB0 into reset
-  UCB0CTLW0  = UCCKPH|UCMSB|UCMST|UCMODE_0|UCSYNC|UCSSEL_2|UCSWRST; // Data Read/Write on Rising Edge 
-                                                                    // MSB first, Master mode, 3-pin SPI
+ // UCB0CTLW0  |= UCCKPH|UCMSB|UCMST|UCMODE_0|UCSYNC|UCSSEL_2|UCSWRST; // Data Read/Write on Rising Edge 
+  UCB0CTLW0 = 0xA9C1;                                                                // MSB first, Master mode, 3-pin SPI
                                                                     // Synchronous mode
                                                                     // SMCLK
-  UCB0BRW = 16;                                                     // Set frequency divider so SPI runs at 16/16 = 1 MHz
+  UCB0BRW = 25;                                                     // Set frequency divider so SPI runs at 16/16 = 1 MHz
   UCB0CTLW0 &= ~UCSWRST;                                            // Bring UCB0 out of reset state
  
   //Initial state for CS is High, CS pulled low to initiate SPI

@@ -13,7 +13,7 @@
 #define CLOCK_SEL0        P1SEL0
 #define CLOCK_SEL1        P1SEL1
 
-// UCA2 Pins for radio
+//NOTE UCAx Pins for radio change this when munny makes UART driver 
 #define UART_TX_PIN       BIT4
 #define UART_RX_PIN       BIT5
 #define UART_TX_PIN_NUM   4                           // TX = P9.4
