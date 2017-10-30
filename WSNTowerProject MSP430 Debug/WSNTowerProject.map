@@ -1,61 +1,69 @@
 
 SYMBOLS BY NAME
 
-    5cbc CODE       _Clock_Setup        
-    6014 CODE       _IncrementVcore     
+    5d76 CODE       _Clock_Setup        
+    606c CODE       _IncrementVcore     
     5c00 ISR        _Port1_ISR          
-    5c84 CODE       _Radio_Interrupt_Setup
-    5c98 CODE       _Radio_SPI_setup    
-    5d38 CODE       _Radio_Strobe       
-    5d88 CODE       _Radio_Write_Burst_Registers
-    5d5c CODE       _Radio_Write_Registers
-    5dca CODE       _Reset_Radio        
-    5e30 CODE       _Send_Dummy         
-    5e22 CODE       _TI_CC_Wait         
-    5e7e CODE       _Write_RF_Settings  
+    5d38 CODE       _Radio_Interrupt_Setup
+    5d4c CODE       _Radio_SPI_setup    
+    5e20 CODE       _Radio_Strobe       
+    5e44 CODE       _Radio_Write_Registers
+    5e70 CODE       _Reset_Radio        
+    1c33 UDATA0     _RxBuffer           
+    5dec CODE       _SendUART           
+    5ec8 CODE       _TI_CC_Wait         
+    5dc6 CODE       _UART_INIT          
+    5c1c ISR        _UART_IR            
+    5ed6 CODE       _Write_RF_Settings  
     1c00            ___RAM_Address      
     4000            ___RAM_Size         
-       0            ___begin_IDATA0     
+    1c00            ___begin_IDATA0     
        0            ___begin_THREAD     
-       0            ___begin_UDATA0     
-       0            ___end_IDATA0       
+    1c01            ___begin_UDATA0     
+    1c01            ___end_IDATA0       
        0            ___end_THREAD       
-       0            ___end_UDATA0       
-    5c42 CODE       _main               
-    60b6 CODE       _memcpy             
-    60c6 CODE       _memset             
-    5d2e CODE       _radio_SPI_desel    
-    5d24 CODE       _radio_SPI_sel      
-    5c42 CONST      thread_init_begin   
-    5c42 CONST      thread_init_end     
+    1e8b            ___end_UDATA0       
+    1c00 IDATA0     _globali            
+    5ce2 CODE       _main               
+    610e CODE       _memcpy             
+    611e CODE       _memset             
+    1c01 UDATA0     _mystring           
+    5e16 CODE       _radio_SPI_desel    
+    5e0c CODE       _radio_SPI_sel      
+    5ce2 CONST      thread_init_begin   
+    5ce2 CONST      thread_init_end     
 
 
 SYMBOLS BY VALUE
 
-       0            ___begin_IDATA0     
        0            ___begin_THREAD     
-       0            ___begin_UDATA0     
-       0            ___end_IDATA0       
        0            ___end_THREAD       
-       0            ___end_UDATA0       
     1c00            ___RAM_Address      
+    1c00            ___begin_IDATA0     
+    1c00 IDATA0     _globali            
+    1c01            ___begin_UDATA0     
+    1c01            ___end_IDATA0       
+    1c01 UDATA0     _mystring           
+    1c33 UDATA0     _RxBuffer           
+    1e8b            ___end_UDATA0       
     4000            ___RAM_Size         
     5c00 ISR        _Port1_ISR          
-    5c42 CONST      thread_init_end     
-    5c42 CODE       _main               
-    5c42 CONST      thread_init_begin   
-    5c84 CODE       _Radio_Interrupt_Setup
-    5c98 CODE       _Radio_SPI_setup    
-    5cbc CODE       _Clock_Setup        
-    5d24 CODE       _radio_SPI_sel      
-    5d2e CODE       _radio_SPI_desel    
-    5d38 CODE       _Radio_Strobe       
-    5d5c CODE       _Radio_Write_Registers
-    5d88 CODE       _Radio_Write_Burst_Registers
-    5dca CODE       _Reset_Radio        
-    5e22 CODE       _TI_CC_Wait         
-    5e30 CODE       _Send_Dummy         
-    5e7e CODE       _Write_RF_Settings  
-    6014 CODE       _IncrementVcore     
-    60b6 CODE       _memcpy             
-    60c6 CODE       _memset             
+    5c1c ISR        _UART_IR            
+    5ce2 CODE       _main               
+    5ce2 CONST      thread_init_end     
+    5ce2 CONST      thread_init_begin   
+    5d38 CODE       _Radio_Interrupt_Setup
+    5d4c CODE       _Radio_SPI_setup    
+    5d76 CODE       _Clock_Setup        
+    5dc6 CODE       _UART_INIT          
+    5dec CODE       _SendUART           
+    5e0c CODE       _radio_SPI_sel      
+    5e16 CODE       _radio_SPI_desel    
+    5e20 CODE       _Radio_Strobe       
+    5e44 CODE       _Radio_Write_Registers
+    5e70 CODE       _Reset_Radio        
+    5ec8 CODE       _TI_CC_Wait         
+    5ed6 CODE       _Write_RF_Settings  
+    606c CODE       _IncrementVcore     
+    610e CODE       _memcpy             
+    611e CODE       _memset             

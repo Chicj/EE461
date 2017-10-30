@@ -7,6 +7,8 @@
 
 #include <msp430f5438a.h>
 #include <msp430.h>
+#include <string.h>
+#include <stdio.h>
 #include "ISR.h"
 #include "radiocmds.h"
 #include "pins.h"
@@ -15,6 +17,8 @@
  Will contain all interrupt code
  P1IV<-- TX/RX interrupts from the CC2500
 */
+
+
 
 void Radio_Interrupt_Setup(void){ // Enable RX interrupts only!  TX interrupt enabled in TX Start
   // Use GDO0 and GDO2 as interrupts to control TX/RX of radio
@@ -59,3 +63,33 @@ void  Port1_ISR (void) __interrupt[PORT1_VECTOR]{
 }
 
 //TODO Add UART driver 
+unsigned char globali = 0;
+unsigned char mystring[50];
+// UCA1 UART interrupt service routine 
+void UART_IR(void) __interrupt[USCI_A1_VECTOR]{
+
+  switch(UCA1IV){
+    case  USCI_UCRXIFG:
+        //save UART input
+            RxBuffer[globali]=UCA1RXBUF;    // save UART into buffer to check for "temp" or "stop"
+            UCA1TXBUF = RxBuffer[globali];  // loop input chars back to terminal 
+            RxBuffer[globali+1] = NULL;         // make sure the RxBuffer ends with a null 
+            while(!(UCA1IFG & UCTXIFG));  // delay for UART TX
+
+          if(RxBuffer[globali] == '\r' ||RxBuffer[globali] == '\n'){ // check input string for new line
+            UCA1TXBUF = '\n';             // start a new line
+            while(!(UCA1IFG & UCTXIFG));  // delay for UART TX
+
+            
+            globali = 0;        // reset global counter       
+            while(mystring[globali] != '\0'){ //print # of chars input 
+              UCA1TXBUF = mystring[globali]; // spit out # of entered chars
+              while(!(UCA1IFG & UCTXIFG));  // delay for UART TX
+              globali++;  // increment counter
+            }
+            globali=0;  // reset global counter 
+
+          }
+      break;
+   }
+}
