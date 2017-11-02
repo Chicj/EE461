@@ -71,7 +71,7 @@ void UART_IR(void) __interrupt[USCI_A1_VECTOR]{
   switch(UCA1IV){
     case  USCI_UCRXIFG:
         //save UART input
-            RxBuffer[globali]=UCA1RXBUF;    // save UART into buffer to check for "temp" or "stop"
+            RxBuffer[globali]=UCA1RXBUF;    // save UART into buffer 
             UCA1TXBUF = RxBuffer[globali];  // loop input chars back to terminal 
             RxBuffer[globali+1] = NULL;         // make sure the RxBuffer ends with a null 
             while(!(UCA1IFG & UCTXIFG));  // delay for UART TX

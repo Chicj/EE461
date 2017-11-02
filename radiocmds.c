@@ -11,19 +11,17 @@
 #include "pins.h"
 
 // TODO Wasn't TxBuffer already 
-unsigned char TxBuffer[600], RxBuffer[600], RxTemp[30];
+char TxBuffer[600], RxBuffer[600], RxTemp[30];
 unsigned int TxBuffer_Len, TxBufferPos=0, TxBytesRemaining, RxBuffer_Len=0, RxBufferPos=0, RxBytesRemaining, state;
 
 /******************************* Fundamental Radio Commands ***********************************/
 // select CS lines for SPI
-void radio_SPI_sel(void){        
-     P3DIR &= ~CS_CC2500;
+void radio_SPI_sel(void){       
      P3OUT &= ~CS_CC2500;
 }
 
 // de-select CS lines for SPI
 void radio_SPI_desel(void){     
-     P3DIR |= CS_CC2500;
      P3OUT |= CS_CC2500;
 }
 
@@ -140,23 +138,18 @@ void Radio_Write_Burst_Registers(char addr, unsigned char *buffer, int count){
 
 // Function to power cycle the radio
 void Reset_Radio(void){
-  P3DIR |= CS_CC2500;
-  P3OUT |= CS_CC2500;                           // Toggle CS with delays to power up radio
+  P3OUT |= CS_CC2500;   //deselecting                        // Toggle CS with delays to power up radio
   TI_CC_Wait(30);
-  P3DIR &= ~CS_CC2500;
-  P3OUT &= ~CS_CC2500;
+  P3OUT &= ~CS_CC2500;  //selecting
   TI_CC_Wait(30);
-  P3DIR |= CS_CC2500;
-  P3OUT |= CS_CC2500;
+  P3OUT |= CS_CC2500;   //deselecting
   TI_CC_Wait(45);
-  P3DIR &= ~CS_CC2500;
-  P3OUT &= ~CS_CC2500;                          // CS enable
+  P3OUT &= ~CS_CC2500;  //selecting                        // CS enable
   while (!(UCB0IFG & UCTXIFG));                 // Wait for TXBUF ready
   UCB0TXBUF = TI_CCxxx0_SRES;                   // Send strobe
                                                 // Strobe addr is now being TX'ed
   while (UCB0STAT & UCBUSY);                    // Wait for TX to complete
-  P3DIR |= CS_CC2500;
-  P3OUT |= CS_CC2500;                           // CS disable
+  P3OUT |= CS_CC2500; //deselect                // CS disable
 
   P1IFG = 0;                                    // Clear flags that were set 
 }

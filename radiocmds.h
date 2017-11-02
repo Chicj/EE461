@@ -28,7 +28,7 @@ void Write_RF_Settings(void);
 
 // TODO Explain to Justin why this is necessary. Doesn't include take care of this?
 // External variables to be used across the project
-extern unsigned char TxBuffer[], RxBuffer[];
+extern char TxBuffer[], RxBuffer[];
 extern unsigned int TxBuffer_Len, TxBufferPos, TxBytesRemaining, RxBuffer_Len,  RxBufferPos, RxBytesRemaining, state;
 
 /******************************** Radio Registers *****************************************/

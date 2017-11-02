@@ -16,16 +16,17 @@
 //Function for radio connection SPI setup
 void Radio_SPI_setup(void){
   unsigned short x;
-  UCB0CTLW0 |= UCSWRST;                                             // Put UCB0 into reset
-  UCB0CTLW0  |= UCCKPH|UCMSB|UCMST|UCMODE_0|UCSYNC|UCSSEL_2|UCSWRST; // Data Read/Write on Rising Edge 
-  UCB0CTLW0 = 0xA9C1;                                                                // MSB first, Master mode, 3-pin SPI
+  UCB0CTL1 |= UCSWRST;                                             // Put UCB0 into reset
+  UCB0CTL0  |= UCCKPH|UCMSB|UCMST|UCMODE_0|UCSYNC; // Data Read/Write on Rising Edge 
+  UCB0CTL1 |= UCSSEL_2;
+  //UCB0CTLW0 = 0xA9C1;                                             // MSB first, Master mode, 3-pin SPI
                                                                     // Synchronous mode
                                                                     // SMCLK
-  UCB0BRW = 17;                                                     // Set frequency divider so SPI runs at 16/16 = 1 MHz
+  UCB0BRW = 17;                                                     // Set frequency divider so SPI runs at 17/17 = 1 MHz
   UCB0CTLW0 &= ~UCSWRST;                                            // Bring UCB0 out of reset state
  
   //Initial state for CS is High, CS pulled low to initiate SPI
-  P3DIR |= CS_CC2500;                                               // Set CS for radio to low
+  P3DIR |= CS_CC2500;                                               // Set CS as an output DONT UNSELECT WHEN IN STUFF THIS AGAIN 
 
   radio_SPI_desel();                                                // Disable CS for radio
 
