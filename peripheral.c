@@ -98,7 +98,7 @@ void UART_INIT(void){
   UCA1IE |= UCRXIE; // Enable RX interrupts 
 }
 
-void SendUART(char * mystring){
+void Send_UART(char * mystring){
   int i = 0;
 
     while(mystring[i] != '\0'){   //print # of chars input 

@@ -2,18 +2,16 @@
 * EE 641 Project - Wireless Sensor Network                                                    *
 * Authors: Chic O'Dell, Justin Long, Rowshon Munny                                            *
 *                                                                                             *
-* Description: peripheral.h is the header file to set declarations for peripheral.c           *
+* Description: protocol.h is the header file to set declarations for protocol.c               *
 ***********************************************************************************************/
 
-#ifndef _PERIPHERAL_H
-#define _PERIPHERAL_H
-#define TOTALCOUNT 125
+#ifndef _PROTOCOL_H
+#define _PROTOCOL_H
 
-// functions list
-void Radio_SPI_setup(void);
-void Clock_Setup(void);
-int IncrementVcore(void);
-void UART_INIT(void);
-void Send_UART(char * mystring);
+// function list
+void FCS(unsigned char *dat, unsigned int *len);
+void bitstuff(unsigned char *dat, unsigned int *len);
+
+sync = 0x7E;
 
 #endif

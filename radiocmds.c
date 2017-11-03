@@ -10,7 +10,6 @@
 #include "radiocmds.h"
 #include "pins.h"
 
-// TODO Wasn't TxBuffer already 
 char TxBuffer[600], RxBuffer[600], RxTemp[30];
 unsigned int TxBuffer_Len, TxBufferPos=0, TxBytesRemaining, RxBuffer_Len=0, RxBufferPos=0, RxBytesRemaining, state;
 

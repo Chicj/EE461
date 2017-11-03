@@ -20,11 +20,13 @@
       <file file_name="peripheral.c" />
       <file file_name="radiocmds.c" />
       <file file_name="IncrementVcore.c" />
+      <file file_name="protocol.h" />
     </folder>
     <folder Name="System Files">
       <configuration Name="Common" filter="xml" />
       <file file_name="$(StudioDir)/src/crt0.asm" />
     </folder>
+    <file file_name="protocol" />
   </project>
   <configuration
     Name="MSP430 Debug"
