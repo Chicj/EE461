@@ -13,6 +13,7 @@
 void Radio_SPI_setup(void);
 void Clock_Setup(void);
 int IncrementVcore(void);
+int DecrementVcore(void);
 void UART_INIT(void);
 void Send_UART(char * mystring);
 

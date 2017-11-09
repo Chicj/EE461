@@ -175,6 +175,49 @@ void Send_Dummy(void){
 
 //TODO add transmit commands 
 
+/* example code that may be helpful for Tx/Rx 
+char RFReceivePacket(char *rxBuffer, char *length)
+{
+  char status[2];
+  char pktLen;
+
+  if ((TI_CC_SPIReadStatus(TI_CCxxx0_RXBYTES) & TI_CCxxx0_NUM_RXBYTES))
+  {
+    pktLen = TI_CC_SPIReadReg(TI_CCxxx0_RXFIFO); // Read length byte
+
+    if (pktLen <= *length)                  // If pktLen size <= rxBuffer
+    {
+      TI_CC_SPIReadBurstReg(TI_CCxxx0_RXFIFO, rxBuffer, pktLen); // Pull data
+      *length = pktLen;                     // Return the actual size
+      TI_CC_SPIReadBurstReg(TI_CCxxx0_RXFIFO, status, 2);
+                                            // Read appended status bytes
+      return (char)(status[TI_CCxxx0_LQI_RX]&TI_CCxxx0_CRC_OK);
+    }                                       // Return CRC_OK bit
+    else
+    {
+      *length = pktLen;                     // Return the large size
+      TI_CC_SPIStrobe(TI_CCxxx0_SFRX);      // Flush RXFIFO
+      return 0;                             // Error
+    }
+  }
+  else
+      return 0;                             // Error
+}
+
+void RFSendPacket(char *txBuffer, char size)
+{
+  TI_CC_SPIWriteBurstReg(TI_CCxxx0_TXFIFO, txBuffer, size); // Write TX data
+  TI_CC_SPIStrobe(TI_CCxxx0_STX);           // Change state to TX, initiating
+                                            // data transfer
+
+  while (!(TI_CC_GDO0_PxIN&TI_CC_GDO0_PIN));
+                                            // Wait GDO0 to go hi -> sync TX'ed
+  while (TI_CC_GDO0_PxIN&TI_CC_GDO0_PIN);
+                                            // Wait GDO0 to clear -> end of pkt
+  TI_CC_GDO0_PxIFG &= ~TI_CC_GDO0_PIN;      // After pkt TX, this flag is set.
+                                            // Has to be cleared before existing
+}
+*/
 /********************************************* Radio Settings ************************************************************/
 void Write_RF_Settings(void)
 {
