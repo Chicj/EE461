@@ -45,15 +45,6 @@ void Radio_SPI_setup(void){
    DecrementVcore();
    DecrementVcore();
    DecrementVcore();
- 
-/*
-  // board PWM pin setups
-  P8DIR |= BIT6;  // set up P8.6 as an OUT1 in TimerA1  25%
-  P7DIR |= BIT3;  // set up P7.3 as an OUT2 TimerA1 75%
-
-  P8SEL |= BIT6;  // set up P8.6 as an Output mode 
-  P7SEL |= BIT3;  // set up P7.3 as an Output mode 
-*/
 
   // TAxCCRn = Content of capture/compare register n will set the count up to val
   TA1CCR0 = TOTALCOUNT; // set count up val 
@@ -77,18 +68,6 @@ void UART_INIT(void){
                                             // over sampling
   UCA1CTL1 &= ~UCSWRST;                     // **Initialize USCI state machine**
   UCA1IE |= UCRXIE;                         // Enable USCI_A0 RX interrupt
-  /*
-  UCA1CTL0   |= UCPEN;// --> a good idea but works w/out
-  //selected parity enable |odd parity| LSB| 8 bit| one stop bit| UART| async mode
-  UCA1CTL1   |= UCSSEL__SMCLK|UCSWRST;
-  // use SMCLK| no  erroneous RX will IR| break chars do no IR| not in sleep mode (UCDORM)| next frame transmitted is data| next frame transmitted is not a break| software rest enabled 
-  //Set UART bit rate from pg 955 fam guide "commonly used baud rate settings"  
-  UCA1BR0 = 2;
-  // Modulation control register pg 951 fam guide 
-  //17MHZ/460800 = 36.89 = 32 + 4.89 = 2*16 + 4 + .89*8 = 7.12 = 7 
-  UCA1MCTL  |= UCBRF_4|UCBRS_7|UCOS16; //set modulation | enabled oversampling mode <-- note UCBRF 5 dosent work when using DCORSEL_4
-  UCA1CTL1  &= ~UCSWRST; // enable UART lock UART settings 
-  UCA1IE |= UCRXIE; // Enable RX interrupts */
 }
 
 void Send_UART(char * mystring){

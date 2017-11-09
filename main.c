@@ -23,7 +23,7 @@ void main(void){
 
   //__delay_cycles(800);
   Reset_Radio();
-  //__delay_cycles(800);          // Wait for radio to be ready before writing registers.cc2500.pdf Table 13 indicates a power-on start-up time of 150 us for the crystal to be stable
+  __delay_cycles(800);          // Wait for radio to be ready before writing registers.cc2500.pdf Table 13 indicates a power-on start-up time of 150 us for the crystal to be stable
   Write_RF_Settings();                
   Radio_Interrupt_Setup();
   Radio_Strobe(TI_CCxxx0_SRX);  //Initialize CC2500 in Rx mode
