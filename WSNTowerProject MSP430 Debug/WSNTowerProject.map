@@ -141,8 +141,8 @@ SYMBOLS BY VALUE
     60ba CODE       _Send_Dummy         
     6108 CODE       _Write_RF_Settings  
     629e CODE       _IncrementVcore     
-    6340 CODE       ___vfprintf_float_long_long
     6340 CODE       ___vfprintf         
+    6340 CODE       ___vfprintf_float_long_long
     757a CODE       ___int16_div        
     75a0 CODE       ___int16_mod        
     75c6 CODE       ___int16_mul        
@@ -177,8 +177,8 @@ SYMBOLS BY VALUE
     7d3e CODE       _modff              
     7dd4 CODE       _floor              
     7dd4 CODE       _floorf             
-    7ea4 CODE       _fmodf              
     7ea4 CODE       _fmod               
+    7ea4 CODE       _fmodf              
     8028 CODE       _fabsf              
     802e CODE       _ldexp              
     806a CODE       _frexp              

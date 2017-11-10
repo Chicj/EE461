@@ -21,6 +21,7 @@
       <file file_name="radiocmds.c" />
       <file file_name="IncrementVcore.c" />
       <file file_name="protocol.h" />
+      <file file_name="protocol.c" />
     </folder>
     <folder Name="System Files">
       <configuration Name="Common" filter="xml" />

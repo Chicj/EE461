@@ -4,16 +4,31 @@
 *                                                                                             *
 * Description: protocols.c contains the functions for following the network protocol          *
 ***********************************************************************************************/
-#include protocol.h
+#include <msp430f5438a.h>
+#include <msp430.h>
+#include "pins.h"
+#include "protocol.h"
 
 /*********************************** Node Protocol Commands ***********************************/
 
 //
 
-void header(unsigned char source, unsigned char 
+unsigned char TX_packet(unsigned char dest, unsigned char cntrl, unsigned char time[], unsigned char info){
+  unsigned short n = sizeof(info);
+  unsigned char temp[64], FCS[];
+  temp[0] = sync;
+  temp[1] = (source << 4) | dest;
+  temp[2] = cntrl;
+  for(int i=0;i<8; i++)
+
+  temp[3] =  (time << (n)*8) | (info);
+  FCS = gen_FCS(temp);
+  temp = (temp << 16) | FCS;
+  return temp;
+}
 
 //NOTE Need to test this. it probably works...
-void FCS(unsigned char *dat, unsigned int *len){
+unsigned char gen_FCS(unsigned char dat[]){
   int i,n;
   unsigned short FCS, SR=0xFFFF;
   unsigned short XORMask;
@@ -24,9 +39,9 @@ void FCS(unsigned char *dat, unsigned int *len){
   const unsigned short GFLIP=0x8408;
 
   // Send the packet through a shift register, XOR tghe appropriate elements with the 
-  for(n=0;n<*len;n++){              //address Tx1Buffer one byte at a time
-    bytemask=0x80;                  //mask to select correct bit in Tx1Buffer byte
-    for(i=0;i<8;i++){               //loop through each bit in Tx1Buffer byte
+  for(n=0;n<sizeof(dat);n++){       //loop through each char
+    bytemask=0x80;                  //mask to select correct bit
+    for(i=0;i<8;i++){               //loop through each bit in dat
       if((dat[n] & bytemask)!=0){
         if((SR & BIT0)!=0){
           SR=SR>>1;
@@ -50,10 +65,8 @@ void FCS(unsigned char *dat, unsigned int *len){
       bytemask=bytemask>>1;
     }
   }
-  FCS = __bit_reverse_short(~SR);
-  dat[*len]=FCS>>8;
-  dat[*len+1]=FCS;
-  *len=*len+2;
+
+  return SR;
 }
 
 //NOTE Need to test this. I doubt it works as is.
@@ -73,9 +86,7 @@ void bitstuff(unsigned char *dat, unsigned int *len){
   for(j=0;j<*len;j++){                                    // counter for dat bytes - search through entire packet
     datmask = 0x80;                                       // initialize datmask to MSB
     for(m=0;m<8;m++){                                     // shift through every bit in dat[j]
-
-      if(ones == 5){                                      // if we had 5 ones
-        scratch[k] = scratch[k] | (scratchmask & 0);      // insert a 0 (this actually does nothing, just for show)
+      if(ones == 5){                                      // if we had 5 ones, insert a 0(i.e. do nothing but increment)
         if(n < 7){                                        // if not last bit in scratch[k]
           scratchmask = scratchmask>>1;                   // shift to next bit in scratch[k]
           n=n+1;                                          // increment bit counter for scratch[k]
@@ -102,9 +113,8 @@ void bitstuff(unsigned char *dat, unsigned int *len){
         ones = ones+1;                                    // increment ones counter
       } 
       
-      else {                                              // if dat bit = 0
+      else {                                              // if dat bit = 0, insert a 0(i.e. do nothing but increment)
         ones = 0;                                         // reset ones counter
-        scratch[k] = scratch[k] | (scratchmask & 0);      // insert a 0 (this actually does nothing, just for show)
         if(n < 7){                                        // if not last bit in scratch[k]
           scratchmask = scratchmask>>1;                   // shift to next bit in scratch[k]
           n=n+1;                                          // increment bit counter for scratch[k]
@@ -120,7 +130,11 @@ void bitstuff(unsigned char *dat, unsigned int *len){
     }
   }
 
-  dat[] = scratch[];
+  // fill back into dat
+  for(j=0;j<sizeof(scratch);j++){
+    dat[j]=scratch[j];
+  }
+
   *len = k;
 }
 
