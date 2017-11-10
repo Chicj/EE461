@@ -11,26 +11,46 @@
 
 /*********************************** Node Protocol Commands ***********************************/
 
-//
+// TODO Test this.
+void send_packet(unsigned char dest, unsigned char cntrl, unsigned char *time, unsigned char *info){
+  unsigned short i, length, FCS;
+  unsigned char *temp, *packet;
+  
+  // Insert ADDR, and CNTRL
+  temp[0] = (source << 4) | dest;
+  temp[1] = cntrl;
+  length = 2;
 
-unsigned char TX_packet(unsigned char dest, unsigned char cntrl, unsigned char time[], unsigned char info){
-  unsigned short n = sizeof(info);
-  unsigned char temp[64], FCS[];
-  temp[0] = sync;
-  temp[1] = (source << 4) | dest;
-  temp[2] = cntrl;
-  for(int i=0;i<8; i++)
+  // Insert TIMESTAMP
+  for(i=0;i<8; i++){
+    temp[length] = time[i];
+    length++;
+  }
 
-  temp[3] =  (time << (n)*8) | (info);
-  FCS = gen_FCS(temp);
-  temp = (temp << 16) | FCS;
-  return temp;
+  // Insert INFO
+  for(i=0;i<sizeof(info); i++){
+    temp[length] = info[i];
+    length++;
+  }
+
+  // Insert FCS
+  insert_FCS(temp);
+
+  // Bitstuff
+  bitstuff(temp);
+  
+  // add sync, fill into packet
+  packet [0] = sync;
+  for(i=0;i<sizeof(temp);i++){
+  packet[i+1] = temp[i];
+  }
+
 }
 
-//NOTE Need to test this. it probably works...
-unsigned char gen_FCS(unsigned char dat[]){
-  int i,n;
-  unsigned short FCS, SR=0xFFFF;
+//TODO test this.
+void insert_FCS(unsigned char *dat){
+  unsigned int i,n, len;
+  unsigned short SR=0xFFFF;
   unsigned short XORMask;
   char bytemask;
 
@@ -38,7 +58,7 @@ unsigned char gen_FCS(unsigned char dat[]){
   // GFLIP=[1 0 0 0 0 1 0 0 0 0 0 0 1 0 0 0]=0x8408 Flipped generator polynomial for XOR operation in loop
   const unsigned short GFLIP=0x8408;
 
-  // Send the packet through a shift register, XOR tghe appropriate elements with the 
+  // Send the packet through a shift register, XOR the appropriate elements with the 
   for(n=0;n<sizeof(dat);n++){       //loop through each char
     bytemask=0x80;                  //mask to select correct bit
     for(i=0;i<8;i++){               //loop through each bit in dat
@@ -65,16 +85,21 @@ unsigned char gen_FCS(unsigned char dat[]){
       bytemask=bytemask>>1;
     }
   }
-
-  return SR;
+  
+  len = sizeof(dat);
+  SR = __bit_reverse_short(~SR);
+  dat[len] = SR>>8;
+  dat[len+1] = SR;
 }
 
-//NOTE Need to test this. I doubt it works as is.
-void bitstuff(unsigned char *dat, unsigned int *len){
+//TODO test this
+void bitstuff(unsigned char *dat){
   unsigned char *scratch;
-  unsigned int j,k;
+  unsigned int j,k, len;
   char m, n, ones;
   unsigned char datmask, scratchmask;
+
+  len = sizeof(dat);
 
   // Search through packet bitwise (after flag) for consecutive 1's.  Need to stuff a 0 bit in packet AFTER the fifth consecutive 1.
 
@@ -83,7 +108,7 @@ void bitstuff(unsigned char *dat, unsigned int *len){
   ones = 0;               //counter for consecutive ones
   scratchmask = 0x80;     //initialize scratchmask to MSB
 
-  for(j=0;j<*len;j++){                                    // counter for dat bytes - search through entire packet
+  for(j=0;j<len;j++){                                    // counter for dat bytes - search through entire packet
     datmask = 0x80;                                       // initialize datmask to MSB
     for(m=0;m<8;m++){                                     // shift through every bit in dat[j]
       if(ones == 5){                                      // if we had 5 ones, insert a 0(i.e. do nothing but increment)
@@ -135,6 +160,5 @@ void bitstuff(unsigned char *dat, unsigned int *len){
     dat[j]=scratch[j];
   }
 
-  *len = k;
 }
 
