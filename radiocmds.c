@@ -196,8 +196,16 @@ void Radio_TX_End(void){
 
 // Function to transmit a known dummy packet
 void Send_Dummy(void){
-  unsigned char DummyBuffer[18] = {0x7E, 0x7E, 0x7E, 0x7E, 0x7E, 0x7E, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0x7E, 0x7E, 0x7E, 0x7E, 0x7E, 0x7E};
-  unsigned int DummyBufferLength = sizeof(DummyBuffer);
+  unsigned int i, DummyBufferLength;
+  unsigned char DummyBuffer[64];
+
+  for(i=0;i<61;i++){
+  DummyBuffer[i] = 0xAA;
+  }
+  DummyBuffer[62] = 0x7E;
+  DummyBuffer[63] = 0x7E;
+
+  DummyBufferLength = sizeof(DummyBuffer);
 
   Radio_Write_Register(TI_CCxxx0_PKTLEN, DummyBufferLength);                     // Set packet length
   Radio_Write_Register(TI_CCxxx0_PKTCTRL0, 0x00);                                // Set to fixed byte mode
