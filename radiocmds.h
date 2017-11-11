@@ -15,7 +15,7 @@ enum power_level{power1=-55,power2=-30, power3= -28, power4 = -26, power5 = -24,
 // function list
 void radio_SPI_sel(void);
 void radio_SPI_desel(void);
-char Radio_Read_Registers(char addr);
+char Radio_Read_Register(char addr);
 void Radio_Read_Burst_Registers(char,unsigned char *, int);
 char Radio_Read_Status(char addr);
 char Radio_Strobe(char);
@@ -23,13 +23,34 @@ void Radio_Write_Registers(char addr, char value);
 void Radio_Write_Burst_Registers(char,unsigned char *, int);
 void Reset_Radio(void);
 void TI_CC_Wait(unsigned int);
-void Send_Dummy(void);
 void Write_RF_Settings(void); 
+void Radio_Rx(void);
+void Radio_Tx(char *,char);
+
+void Radio_TX(char *,char );
+void Radio_TX_Running(void);
+void Radio_TX_End(void);
+
+void Send_Dummy(void);
+void radio_stream(char *);
+
+//Create event flags for the radio FIFO
+#define TxThrBytes 30   
+#define RxThrBytes 30
+
+// ISR state defs for TX_state
+#define IDLE         0
+#define TX_START     1
+#define TX_RUNNING   2
+#define TX_END       3
+#define RX_START     4
+#define RX_RUNNING   5
 
 // TODO Explain to Justin why this is necessary. Doesn't include take care of this? Why do we need to declare these here and in the radiocmds.c?
 // External variables to be used across the project
-extern char TxBuffer[], RxBuffer[];
+extern unsigned char TxBuffer[], RxBuffer[], RxTemp[];
 extern unsigned int TxBuffer_Len, TxBufferPos, TxBytesRemaining, RxBuffer_Len,  RxBufferPos, RxBytesRemaining, state;
+extern char status; // holds radio status
 
 /******************************** Radio Registers *****************************************/
 #define TI_CCxxx0_IOCFG2       0x00        // GDO2 output pin configuration

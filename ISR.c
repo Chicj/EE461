@@ -11,14 +11,8 @@
 #include <stdio.h>
 #include "ISR.h"
 #include "radiocmds.h"
+#include "peripheral.h"
 #include "pins.h"
-
-/*
- Will contain all interrupt code
- P1IV<-- TX/RX interrupts from the CC2500
-*/
-
-
 
 void Radio_Interrupt_Setup(void){ // Enable RX interrupts only!  TX interrupt enabled in TX Start
   // Use GDO0 and GDO2 as interrupts to control TX/RX of radio
@@ -32,37 +26,36 @@ void  Port1_ISR (void) __interrupt[PORT1_VECTOR]{
     //read P1IV to determine which interrupt happened
     //reading automatically resets the flag for the returned state
     switch(P1IV){
-       case CC2500_GDO0_IV: // [CC2500_GDO0] RX is set up to assert when RX FIFO is greater than FIFO_THR.  This is an RX function only
-            //TODO read buffer here
+       case CC2500_GDO0: // [CC2500_GDO0] RX is set up to assert when RX FIFO is greater than FIFO_THR.  This is an RX function only
+            Radio_Rx(); // read Rx buffer
         break;
     // TX state
-        case CC2500_GDO2_IV: //[CC2500_GDO2] TX is set up to assert when TX FIFO is above FIFO_THR threshold.  
-        // Actual interrupt SR                
-         /* switch(state) // TODO state will need to be updated.... not sure where to do this yet.
+        case CC2500_GDO2: //[CC2500_GDO2] TX is set up to assert when TX FIFO is above FIFO_THR threshold.            
+          switch(TX_state) 
           {
               case IDLE:  
                    break;
               case TX_START:  //Called on falling edge of GDO2, Tx FIFO < threshold, Radio in TX mode, Packet in progress
-                    state = TX_RUNNING;
-                    
+                    //Radio_TX();
                    break;
               case TX_RUNNING: //Called on falling edge of GDO2, Tx FIFO < threshold, Radio in TX mode, Packet in progress
-                    
+                    Radio_TX_Running();
+
                    break;
-              case TX_END:  //Called on falling edge of GDO2, Tx FIFO < threshold, Radio in TX mode, Last part of packet to transmit
-                   state = IDLE;
+              case TX_END:     //Called on falling edge of GDO2, Tx FIFO < threshold, Radio in TX mode, Last part of packet to transmit
+                   Radio_TX_End();
                    
                    break;
               default:
                 break;         
-          } */ 
+          } 
         break;
         default:
         break;
         }
 }
 
-//TODO Add UART driver 
+//**************************************************************** UART ISR ************************************************************
 unsigned char globali = 0;
 unsigned char mystring[50];
 // UCA1 UART interrupt service routine 

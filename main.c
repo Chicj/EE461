@@ -17,36 +17,42 @@
 
 void main(void){
   WDTCTL = WDTPW + WDTHOLD;
+
   // setup function calls
-  Clock_Setup();              // Setup Functions
+  Clock_Setup();                  
   Radio_SPI_setup();
 
-  //__delay_cycles(800);
   Reset_Radio();
-  __delay_cycles(800);          // Wait for radio to be ready before writing registers.cc2500.pdf Table 13 indicates a power-on start-up time of 150 us for the crystal to be stable
+  __delay_cycles(800);                          // Wait for radio to be ready before writing registers.cc2500.pdf Table 13 indicates a power-on start-up time of 150 us for the crystal to be stable
   Write_RF_Settings();                
   Radio_Interrupt_Setup();
-  Radio_Strobe(TI_CCxxx0_SRX);  //Initialize CC2500 in Rx mode
-  //__delay_cycles(100000);       // let things settle <-- otherwise we dont see start up message
-  UART_INIT();                  // UART is set to 460800 baud | odd parity| LSB| 8 bit| one stop bit
+  Radio_Strobe(TI_CCxxx0_SRX);                  //Initialize CC2500 in Rx mode
+  UART_INIT();                                  // UART is set to 460800 baud | odd parity| LSB| 8 bit| one stop bit
 
   Send_UART("EE646 WSN code.\r\n");
 
-  //NOTE this will mess up our interrupts on P1!
-  P1DIR |= BIT0;                // Set LED pin DIR
-  P1OUT |= BIT0;                // turn on a LED to indicate power
+  P1DIR |= BIT0;                               // Set LED pin DIR
+  P1OUT |= BIT0;                               // turn on a LED to indicate power
 
    //__bis_SR_register(LPM0_bits + GIE);       // Enter LPM3, enable interrupts
   
   // NOTE This is for testing
-   _EINT();  // set global IR enable 
+   _EINT();                                    // set global IR enable 
   for(;;){
-    char status = Radio_Read_Status(TI_CCxxx0_MARCSTATE);
+    //streamCmd(argv[]); // make things easy to see on the CXA
+
+    status = Radio_Read_Status(TI_CCxxx0_MARCSTATE);
     state=status&(~(BIT7|BIT6|BIT5));         // get the state of the radio from the full status byte
-    sprintf(TxBuffer,"The status of the radio is %i \r\n",state);
-    Send_UART(TxBuffer);
-    Send_Dummy();
-    P1OUT ^= BIT0;                // turn on a LED to indicate power
-    __delay_cycles(2000000);                 // Wait for radio to be ready before writing registers.cc2500.pdf Table 13 indicates a power-on start-up time of 150 us for the crystal to be stable
+    sprintf(UARTBuff,"Radio State: 0x%02x \n\r",state);
+    Send_UART(UARTBuff);
+    //Send_Dummy();
+    P1OUT ^= BIT0;                            // turn on a LED to indicate power
+    __delay_cycles(2000000);                  // Wait for radio to be ready before writing registers.cc2500.pdf Table 13 indicates a power-on start-up time of 150 us for the crystal to be stable
   }
 }
+
+
+// NOTE 
+/*
+Add transmit on a button push ? 
+*/

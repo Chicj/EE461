@@ -9,9 +9,12 @@
 #define _PROTOCOL_H
 
 // function list
-void FCS(unsigned char *dat, unsigned int *len);
-void bitstuff(unsigned char *dat, unsigned int *len);
+void insert_FCS(unsigned char *dat);
+void bitstuff(unsigned char *dat);
 
-sync = 0x7E;
+unsigned char sync = 0x7E;
+unsigned char source = 0x1;
+
+
 
 #endif

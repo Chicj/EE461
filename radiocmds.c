@@ -7,11 +7,16 @@
 
 #include <msp430f5438a.h>
 #include <msp430.h>
+#include <stdio.h>
 #include "radiocmds.h"
 #include "pins.h"
+#include "peripheral.h"
 
-char TxBuffer[600], RxBuffer[600], RxTemp[30];
+char status;
+unsigned char TxBuffer[], RxBuffer[600], RxTemp[30];
 unsigned int TxBuffer_Len, TxBufferPos=0, TxBytesRemaining, RxBuffer_Len=0, RxBufferPos=0, RxBytesRemaining, state;
+
+
 
 /******************************* Fundamental Radio Commands ***********************************/
 // select CS lines for SPI
@@ -25,7 +30,7 @@ void radio_SPI_desel(void){
 }
 
 // read a radio register 
-char Radio_Read_Registers(char addr){
+char Radio_Read_Register(char addr){
   char x;
     
   radio_SPI_sel ();                             // set SPI CS
@@ -103,7 +108,7 @@ char Radio_Strobe(char strobe){
 }
 
 //Function to write a single byte to the radio registers
-void Radio_Write_Registers(char addr, char value){
+void Radio_Write_Register(char addr, char value){
   radio_SPI_sel ();                 // set SPI CS
 
   while (!(UCB0IFG & UCTXIFG));                 // Wait for TXBUF ready
@@ -158,7 +163,35 @@ void TI_CC_Wait(unsigned int cycles){
   while(cycles>15)                              // 15 cycles consumed by overhead
     cycles = cycles - 6;                        // 6 cycles consumed each iteration
 }
+void Radio_Rx(void){
+      // Triggered by GDO0 interrupt     
+      // Entering here indicates that the RX FIFO is more than half filed.
+      // Need to read RXThrBytes into RXBuffer then move RxBufferPos by RxThrBytes
+      // Then wait until interrupt received again.
+      //(char addr, unsigned char *buffer, int count, int radio_select)
+      Radio_Read_Burst_Registers(TI_CCxxx0_RXFIFO, RxTemp, RxThrBytes);
+      //TODO ADD DECODE HERE 
+      status = Radio_Read_Status(TI_CCxxx0_MARCSTATE);
+      sprintf(UARTBuff,"Radio State: 0x%02x \n\rCC2500 RX.\r\n",state);
+      Send_UART(UARTBuff);
+}
 
+
+void Radio_TX(char *TxBuffer,char TxBuffer_Len){
+  TX_state = TX_START; 
+      TxBufferPos = 0;
+    
+}
+
+void Radio_TX_Running(void){
+  TX_state = TX_RUNNING; 
+
+}
+
+void Radio_TX_End(void){
+  TX_state = IDLE; 
+
+}
 /******************************************** Specialized Radio Commands **************************************************/
 
 // Function to transmit a known dummy packet
@@ -166,58 +199,21 @@ void Send_Dummy(void){
   unsigned char DummyBuffer[18] = {0x7E, 0x7E, 0x7E, 0x7E, 0x7E, 0x7E, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0x7E, 0x7E, 0x7E, 0x7E, 0x7E, 0x7E};
   unsigned int DummyBufferLength = sizeof(DummyBuffer);
 
-  Radio_Write_Registers(TI_CCxxx0_PKTLEN, DummyBufferLength);                     // Set packet length
-  Radio_Write_Registers(TI_CCxxx0_PKTCTRL0, 0x00);                                // Set to fixed byte mode
+  Radio_Write_Register(TI_CCxxx0_PKTLEN, DummyBufferLength);                     // Set packet length
+  Radio_Write_Register(TI_CCxxx0_PKTCTRL0, 0x00);                                // Set to fixed byte mode
   Radio_Write_Burst_Registers(TI_CCxxx0_TXFIFO, DummyBuffer, DummyBufferLength);  // Write TX data
 
   Radio_Strobe(TI_CCxxx0_STX);                                                    // Set radio to transmit
 }
 
-//TODO add transmit commands 
+//TODO for testing ? this is easy to see on a VNA
+void radio_stream(char *argv){
 
-/* example code that may be helpful for Tx/Rx 
-char RFReceivePacket(char *rxBuffer, char *length)
-{
-  char status[2];
-  char pktLen;
 
-  if ((TI_CC_SPIReadStatus(TI_CCxxx0_RXBYTES) & TI_CCxxx0_NUM_RXBYTES))
-  {
-    pktLen = TI_CC_SPIReadReg(TI_CCxxx0_RXFIFO); // Read length byte
 
-    if (pktLen <= *length)                  // If pktLen size <= rxBuffer
-    {
-      TI_CC_SPIReadBurstReg(TI_CCxxx0_RXFIFO, rxBuffer, pktLen); // Pull data
-      *length = pktLen;                     // Return the actual size
-      TI_CC_SPIReadBurstReg(TI_CCxxx0_RXFIFO, status, 2);
-                                            // Read appended status bytes
-      return (char)(status[TI_CCxxx0_LQI_RX]&TI_CCxxx0_CRC_OK);
-    }                                       // Return CRC_OK bit
-    else
-    {
-      *length = pktLen;                     // Return the large size
-      TI_CC_SPIStrobe(TI_CCxxx0_SFRX);      // Flush RXFIFO
-      return 0;                             // Error
-    }
-  }
-  else
-      return 0;                             // Error
 }
 
-void RFSendPacket(char *txBuffer, char size)
-{
-  TI_CC_SPIWriteBurstReg(TI_CCxxx0_TXFIFO, txBuffer, size); // Write TX data
-  TI_CC_SPIStrobe(TI_CCxxx0_STX);           // Change state to TX, initiating
-                                            // data transfer
 
-  while (!(TI_CC_GDO0_PxIN&TI_CC_GDO0_PIN));
-                                            // Wait GDO0 to go hi -> sync TX'ed
-  while (TI_CC_GDO0_PxIN&TI_CC_GDO0_PIN);
-                                            // Wait GDO0 to clear -> end of pkt
-  TI_CC_GDO0_PxIFG &= ~TI_CC_GDO0_PIN;      // After pkt TX, this flag is set.
-                                            // Has to be cleared before existing
-}
-*/
 /********************************************* Radio Settings ************************************************************/
 void Write_RF_Settings(void)
 {
@@ -254,41 +250,41 @@ void Write_RF_Settings(void)
 * GDO2 signal selection = (11) Serial Clock
 */
 
-Radio_Write_Registers(TI_CCxxx0_IOCFG2,   0x02);  // GDO2 output pin config. TX
-Radio_Write_Registers(TI_CCxxx0_IOCFG0,   0x00);  // GDO0 output pin config. RX
-Radio_Write_Registers(TI_CCxxx0_FIFOTHR,  0x07);  // FIFO Threshold: 21 byte in TX FIFO and 44 in RX FIFO
+Radio_Write_Register(TI_CCxxx0_IOCFG2,   0x02);  // GDO2 output pin config. TX
+Radio_Write_Register(TI_CCxxx0_IOCFG0,   0x00);  // GDO0 output pin config. RX
+Radio_Write_Register(TI_CCxxx0_FIFOTHR,  0x07);  // FIFO Threshold: 21 byte in TX FIFO and 44 in RX FIFO
 
-Radio_Write_Registers(TI_CCxxx0_PKTLEN,   0xFF); // Packet length.
-Radio_Write_Registers(TI_CCxxx0_PKTCTRL1, 0x04); // Packet automation control.
-Radio_Write_Registers(TI_CCxxx0_PKTCTRL0, 0x05); // Packet automation control.
-Radio_Write_Registers(TI_CCxxx0_ADDR,     0x01); // Device address.
-Radio_Write_Registers(TI_CCxxx0_CHANNR,   0x00); // Channel number.
-Radio_Write_Registers(TI_CCxxx0_FSCTRL1,  0x08); // Freq synthesizer control.
-Radio_Write_Registers(TI_CCxxx0_FSCTRL0,  0x00); // Freq synthesizer control.
-Radio_Write_Registers(TI_CCxxx0_FREQ2,    0x5C); // Freq control word, high byte
-Radio_Write_Registers(TI_CCxxx0_FREQ1,    0x4E); // Freq control word, mid byte.
-Radio_Write_Registers(TI_CCxxx0_FREQ0,    0xC3); // Freq control word, low byte.
-Radio_Write_Registers(TI_CCxxx0_MDMCFG4,  0x2B); // Modem configuration.
-Radio_Write_Registers(TI_CCxxx0_MDMCFG3,  0xF8); // Modem configuration.
-Radio_Write_Registers(TI_CCxxx0_MDMCFG2,  0x03); // Modem configuration. FSK
-Radio_Write_Registers(TI_CCxxx0_MDMCFG1,  0x22); // Modem configuration.
-Radio_Write_Registers(TI_CCxxx0_MDMCFG0,  0xF8); // Modem configuration.
-Radio_Write_Registers(TI_CCxxx0_DEVIATN,  0x50); // Modem dev (when FSK mod en) for FSK(47.607 kHz Deviation)
-Radio_Write_Registers(TI_CCxxx0_MCSM1 ,   0x30); // MainRadio Cntrl State Machine
-Radio_Write_Registers(TI_CCxxx0_MCSM0 ,   0x18); // MainRadio Cntrl State Machine
-Radio_Write_Registers(TI_CCxxx0_FOCCFG,   0x1D); // Freq Offset Compens. Config
-Radio_Write_Registers(TI_CCxxx0_BSCFG,    0x1C); // Bit synchronization config.
-Radio_Write_Registers(TI_CCxxx0_AGCCTRL2, 0x00); // AGC control.
-Radio_Write_Registers(TI_CCxxx0_AGCCTRL1, 0x58); // AGC control.
-Radio_Write_Registers(TI_CCxxx0_AGCCTRL0, 0x91); // AGC control.
-Radio_Write_Registers(TI_CCxxx0_FREND1,   0x00); // Front end RX configuration.
-Radio_Write_Registers(TI_CCxxx0_FREND0,   0x10); // Front end RX configuration.
-Radio_Write_Registers(TI_CCxxx0_FSCAL3,   0xA9); // Frequency synthesizer cal.
-Radio_Write_Registers(TI_CCxxx0_FSCAL2,   0x0A); // Frequency synthesizer cal.
-Radio_Write_Registers(TI_CCxxx0_FSCAL1,   0x00); // Frequency synthesizer cal.
-Radio_Write_Registers(TI_CCxxx0_FSCAL0,   0x11); // Frequency synthesizer cal.
-Radio_Write_Registers(TI_CCxxx0_FSTEST,   0x59); // Frequency synthesizer cal.
-Radio_Write_Registers(TI_CCxxx0_TEST2,    0x88); // Various test settings.
-Radio_Write_Registers(TI_CCxxx0_TEST1,    0x31); // Various test settings.
-Radio_Write_Registers(TI_CCxxx0_TEST0,    0x0B); // Various test settings.
+Radio_Write_Register(TI_CCxxx0_PKTLEN,   0xFF); // Packet length.
+Radio_Write_Register(TI_CCxxx0_PKTCTRL1, 0x04); // Packet automation control.
+Radio_Write_Register(TI_CCxxx0_PKTCTRL0, 0x05); // Packet automation control.
+Radio_Write_Register(TI_CCxxx0_ADDR,     0x01); // Device address.
+Radio_Write_Register(TI_CCxxx0_CHANNR,   0x00); // Channel number.
+Radio_Write_Register(TI_CCxxx0_FSCTRL1,  0x08); // Freq synthesizer control.
+Radio_Write_Register(TI_CCxxx0_FSCTRL0,  0x00); // Freq synthesizer control.
+Radio_Write_Register(TI_CCxxx0_FREQ2,    0x5C); // Freq control word, high byte
+Radio_Write_Register(TI_CCxxx0_FREQ1,    0x4E); // Freq control word, mid byte.
+Radio_Write_Register(TI_CCxxx0_FREQ0,    0xC3); // Freq control word, low byte.
+Radio_Write_Register(TI_CCxxx0_MDMCFG4,  0x2B); // Modem configuration.
+Radio_Write_Register(TI_CCxxx0_MDMCFG3,  0xF8); // Modem configuration.
+Radio_Write_Register(TI_CCxxx0_MDMCFG2,  0x03); // Modem configuration. FSK
+Radio_Write_Register(TI_CCxxx0_MDMCFG1,  0x22); // Modem configuration.
+Radio_Write_Register(TI_CCxxx0_MDMCFG0,  0xF8); // Modem configuration.
+Radio_Write_Register(TI_CCxxx0_DEVIATN,  0x50); // Modem dev (when FSK mod en) for FSK(47.607 kHz Deviation)
+Radio_Write_Register(TI_CCxxx0_MCSM1 ,   0x30); // MainRadio Cntrl State Machine
+Radio_Write_Register(TI_CCxxx0_MCSM0 ,   0x18); // MainRadio Cntrl State Machine
+Radio_Write_Register(TI_CCxxx0_FOCCFG,   0x1D); // Freq Offset Compens. Config
+Radio_Write_Register(TI_CCxxx0_BSCFG,    0x1C); // Bit synchronization config.
+Radio_Write_Register(TI_CCxxx0_AGCCTRL2, 0x00); // AGC control.
+Radio_Write_Register(TI_CCxxx0_AGCCTRL1, 0x58); // AGC control.
+Radio_Write_Register(TI_CCxxx0_AGCCTRL0, 0x91); // AGC control.
+Radio_Write_Register(TI_CCxxx0_FREND1,   0x00); // Front end RX configuration.
+Radio_Write_Register(TI_CCxxx0_FREND0,   0x10); // Front end RX configuration.
+Radio_Write_Register(TI_CCxxx0_FSCAL3,   0xA9); // Frequency synthesizer cal.
+Radio_Write_Register(TI_CCxxx0_FSCAL2,   0x0A); // Frequency synthesizer cal.
+Radio_Write_Register(TI_CCxxx0_FSCAL1,   0x00); // Frequency synthesizer cal.
+Radio_Write_Register(TI_CCxxx0_FSCAL0,   0x11); // Frequency synthesizer cal.
+Radio_Write_Register(TI_CCxxx0_FSTEST,   0x59); // Frequency synthesizer cal.
+Radio_Write_Register(TI_CCxxx0_TEST2,    0x88); // Various test settings.
+Radio_Write_Register(TI_CCxxx0_TEST1,    0x31); // Various test settings.
+Radio_Write_Register(TI_CCxxx0_TEST0,    0x0B); // Various test settings.
 }
