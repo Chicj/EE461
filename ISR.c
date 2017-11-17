@@ -26,11 +26,12 @@ void  Port1_ISR (void) __interrupt[PORT1_VECTOR]{
     //read P1IV to determine which interrupt happened
     //reading automatically resets the flag for the returned state
     switch(P1IV){
-       case CC2500_GDO0: // [CC2500_GDO0] RX is set up to assert when RX FIFO is greater than FIFO_THR.  This is an RX function only
+       case CC2500_GDO0_IV: // [CC2500_GDO0] RX is set up to assert when RX FIFO is greater than FIFO_THR.  This is an RX function only
             Radio_Rx(); // read Rx buffer
+            P1OUT ^= BIT1;
         break;
     // TX state
-        case CC2500_GDO2: //[CC2500_GDO2] TX is set up to assert when TX FIFO is above FIFO_THR threshold.            
+        case CC2500_GDO2_IV: //[CC2500_GDO2] TX is set up to assert when TX FIFO is above FIFO_THR threshold.            
           switch(TX_state) 
           {
               case IDLE:  

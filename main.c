@@ -31,7 +31,7 @@ void main(void){
 
   Send_UART("EE646 WSN code.\r\n");
 
-  P1DIR |= BIT0;                               // Set LED pin DIR
+  P1DIR |= BIT0 | BIT1;                               // Set LED pin DIR
   P1OUT |= BIT0;                               // turn on a LED to indicate power
 
    //__bis_SR_register(LPM0_bits + GIE);       // Enter LPM3, enable interrupts
