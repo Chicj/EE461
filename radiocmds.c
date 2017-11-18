@@ -13,7 +13,7 @@
 #include "peripheral.h"
 
 char status;
-unsigned char TxBuffer[], RxBuffer[600], RxTemp[30];
+unsigned char TxBuffer[], RxBuffer[70], RxTemp[30];
 unsigned int TxBuffer_Len, TxBufferPos=0, TxBytesRemaining, RxBuffer_Len=0, RxBufferPos=0, RxBytesRemaining, state;
 
 
@@ -169,10 +169,17 @@ void Radio_Rx(void){
       // Need to read RXThrBytes into RXBuffer then move RxBufferPos by RxThrBytes
       // Then wait until interrupt received again.
       //(char addr, unsigned char *buffer, int count, int radio_select)
-      Radio_Read_Burst_Registers(TI_CCxxx0_RXFIFO, RxTemp, RxThrBytes);
+      int i;
+      Radio_Read_Burst_Registers(TI_CCxxx0_RXFIFO, RxBuffer, RxThrBytes);
       //TODO ADD DECODE HERE 
       status = Radio_Read_Status(TI_CCxxx0_MARCSTATE);
-      sprintf(UARTBuff,"Radio State: 0x%02x \n\rCC2500 RX.\r\n",state);
+      sprintf(UARTBuff,"Received Stuff was: \n",RxBuffer);
+      Send_UART(UARTBuff);
+      for(i=0; i<sizeof(RxBuffer); i++){
+        sprintf(UARTBuff,"0x%02x, ",RxBuffer[i]);
+        Send_UART(UARTBuff);
+      }
+      sprintf(UARTBuff,"\n-----end packet-----\n");
       Send_UART(UARTBuff);
 }
 
@@ -185,7 +192,6 @@ void Radio_TX(char *TxBuffer,char TxBuffer_Len){
 
 void Radio_TX_Running(void){
   TX_state = TX_RUNNING; 
-
 }
 
 void Radio_TX_End(void){
