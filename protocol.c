@@ -6,24 +6,33 @@
 ***********************************************************************************************/
 #include <msp430f5438a.h>
 #include <msp430.h>
+#include <stdio.h>
 #include "pins.h"
 #include "protocol.h"
+#include "radiocmds.h"
+#include "peripheral.h"
+#include "ISR.h"
 
-/*********************************** Node Protocol Commands ***********************************/
+/*********************************** Transmit Commands ***********************************/
 
 // TODO Test this.
-void send_packet(unsigned char dest, unsigned char cntrl, unsigned char *time, unsigned char *info){
+void send_packet(unsigned char dest, unsigned char cntrl, unsigned long clockSent, unsigned long clockData, unsigned char *info){
   unsigned short i, length, FCS;
-  unsigned char *temp, *packet;
-  
+  unsigned char *temp, *packet, *timeSent, *timeData;
+
   // Insert ADDR, and CNTRL
   temp[0] = (source << 4) | dest;
   temp[1] = cntrl;
   length = 2;
 
   // Insert TIMESTAMP
-  for(i=0;i<8; i++){
-    temp[length] = time[i];
+  // TODO convert the clocks into an array of chars (time)
+  for(i=0;i<4; i++){
+    temp[length] = timeSent[i];
+    length++;
+  }
+  for(i=0;i<4; i++){
+    temp[length] = timeData[i];
     length++;
   }
 
@@ -95,11 +104,9 @@ void insert_FCS(unsigned char *dat){
 //TODO test this
 void bitstuff(unsigned char *dat){
   unsigned char *scratch;
-  unsigned int j,k, len;
+  unsigned int j,k, len = sizeof(dat);
   char m, n, ones;
   unsigned char datmask, scratchmask;
-
-  len = sizeof(dat);
 
   // Search through packet bitwise (after flag) for consecutive 1's.  Need to stuff a 0 bit in packet AFTER the fifth consecutive 1.
 
@@ -161,3 +168,128 @@ void bitstuff(unsigned char *dat){
   }
 
 }
+
+/************************************* Receive Commands ********************************************/
+unsigned int RX_SR = 0; dump, bit, RX_ST;
+unsigned char RX_SR17 = 0, datmask, RXFLAG = 0;
+
+// Unscramble the RX buffer
+// TODO Test this
+void unscramble(unsigned char *indat){
+
+  unsigned int j, k, inlen = sizeof(indat);
+  unsigned char SR12, newbit;
+
+  for(k=0;k<inlen;k++){
+    datmask = 0x80;
+
+    for(j=0;j<8;j++){
+      if((indat[k] & datmask) == 0){        // Grab the current bit in dat[k]
+        bit = 0;
+      } else {
+        bit = 1;
+      }
+      if((RX_SR & 0x0800) == 0){            // Grab the twelfth bit in RX_SR
+        SR12 = 0;
+      } else {
+        SR12 = 1;
+      }
+      newbit = bit ^ (SR12 ^ RX_SR17);      // Unscramble the bit
+      if(newbit == 0){
+        indat[k] = indat[k] & ~datmask;     // put back in the unscrambled bit
+      } else {
+        indat[k] = indat[k] | datmask;
+      }
+      if((RX_SR & 0x8000) == 0){            // set up RX_SR17 for next loop;
+        RX_SR17 = 0;
+      } else {
+        RX_SR17 = 1;
+      }
+      
+      datmask = datmask>>1;                 // shift to next bit in dat[k]
+      
+      RX_SR = RX_SR<<1;                     // shift left
+      if(bit != 0){
+        RX_SR = RX_SR | 0x0001;             // shift in bit (at LSB)
+      } 
+    }    
+  }
+}
+
+// Reverse the transition encoding of the packet. MUST be called after unscramble.
+// TODO Test this
+void untransition(unsigned char *indat){
+
+  unsigned int j, k, inlen = sizeof(indat);
+
+  for(k=0;k<inlen;k++){
+    datmask = 0x80;
+    for(j=0;j<8;j++){
+      if((indat[k] & datmask) == 0){
+        bit = 0;
+      } else {
+        bit = 1;
+      }
+      if(RX_ST == bit){
+        indat[k] = indat[k] | datmask;      // put in 1
+      } else {
+        indat[k] = indat[k] & ~datmask;     // put in 0
+      }
+      RX_ST = bit;
+      datmask = datmask>>1;
+    }  
+  }
+}
+
+// Find the syncs within the RX buffer.
+// TODO Test this
+void find_sync(unsigned char *indat){
+
+  unsigned int j,k, inlen = sizeof(indat);
+  
+  datmask = 0x80;
+
+  for(j=0;j<8;j++){
+    switch(RXFLAG){
+      case 0:
+        if((indat[k] & datmask) == 0){
+          RXFLAG = 1;
+        } else {
+          RXFLAG = 0;
+        }
+      break;
+      case 1:                               // Found first 0.  Find next six 1's (case 1-6)
+      case 2:
+      case 3:
+      case 4:
+      case 5:
+      case 6:
+          if((indat[k] & datmask) == 0){    // Bit = 0, still at first zero
+            RXFLAG = 1;
+          } else {
+            RXFLAG = RXFLAG + 1;            // Bit = 1, counting six one's
+          }
+          break;
+      case 7:                               // Found 0111 111, looking for last 0
+          if((indat[k] & datmask) == 0){    // Bit = 0, FOUND FLAG BYTE
+            RXFLAG = 8;
+          } else {                          // Bit = 1, Start over from beginning
+            RXFLAG = 0;
+          }
+      break;
+      // TODO Decide what to do when a SYNC is found
+      case 8:                               // Found SYNC. Fill more things here eventually
+        sprintf(UARTBuff,"SYNC found!");
+        Send_UART(UARTBuff);
+    }
+        
+        
+
+  }
+
+}
+
+void RX_Test(unsigned char *dat){
+
+}
+  

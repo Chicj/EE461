@@ -14,8 +14,11 @@
 #include "ISR.h"
 #include "pins.h"
 
+unsigned long timer=0;
+
 
 void main(void){
+
   WDTCTL = WDTPW + WDTHOLD;
 
   // setup function calls
@@ -39,15 +42,24 @@ void main(void){
   // NOTE This is for testing
    _EINT();                                    // set global IR enable 
   for(;;){
+    
     //streamCmd(argv[]); // make things easy to see on the CXA
+    timer++;
 
-    status = Radio_Read_Status(TI_CCxxx0_MARCSTATE);
-    state=status&(~(BIT7|BIT6|BIT5));         // get the state of the radio from the full status byte
-    sprintf(UARTBuff,"Radio State: 0x%02x \n\r",state);
-    Send_UART(UARTBuff);
-    //Send_Dummy();
-    P1OUT ^= BIT0;                            // turn on a LED to indicate power
-    __delay_cycles(2000000);                  // Wait for radio to be ready before writing registers.cc2500.pdf Table 13 indicates a power-on start-up time of 150 us for the crystal to be stable
+    // Only do things once every second
+    if (timer%1000000 == 0){
+      status = Radio_Read_Status(TI_CCxxx0_MARCSTATE);
+      state=status&(~(BIT7|BIT6|BIT5));         // get the state of the radio from the full status byte
+      sprintf(UARTBuff,"Radio State: 0x%02x \n\r",state);
+      Send_UART(UARTBuff);
+      //Send_Dummy();
+      P1OUT ^= BIT0;                            // turn on a LED to indicate power
+    }
+
+    // if timer is reaching the limit of unsigned long, reset it
+    if (timer > 4000000000){
+      timer = 0;
+    }
   }
 }
 

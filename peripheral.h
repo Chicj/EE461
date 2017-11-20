@@ -17,6 +17,6 @@ int DecrementVcore(void);
 void UART_INIT(void);
 void Send_UART(char * mystring);
 
-extern unsigned char UARTBuff[];  // UART scratch pad
+extern char UARTBuff[];  // UART scratch pad
 extern unsigned int TX_state;
 #endif

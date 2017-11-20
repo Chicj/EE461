@@ -11,7 +11,7 @@
 #include "radiocmds.h"
 #include "pins.h"
 
-unsigned char UARTBuff[100]; // scratch pad for UART buffer
+char UARTBuff[100]; // scratch pad for UART buffer
 unsigned int  TX_state = IDLE;
 
 /******************************************* SPI  Setup ***************************************/
