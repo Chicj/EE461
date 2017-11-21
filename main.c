@@ -11,11 +11,12 @@
 #include <stdio.h>
 #include "radiocmds.h"
 #include "peripheral.h"
+#include "protocol.h"
 #include "ISR.h"
 #include "pins.h"
 
 unsigned long timer=0;
-
+unsigned char inf[23] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17};
 
 void main(void){
 
@@ -50,9 +51,10 @@ void main(void){
     if (timer%1000000 == 0){
       status = Radio_Read_Status(TI_CCxxx0_MARCSTATE);
       state=status&(~(BIT7|BIT6|BIT5));         // get the state of the radio from the full status byte
+      send_packet(0x01, 0x01, timer, timer, inf);
       sprintf(UARTBuff,"Radio State: 0x%02x \n\r",state);
       Send_UART(UARTBuff);
-      //Send_Dummy();
+      
       P1OUT ^= BIT0;                            // turn on a LED to indicate power
     }
 

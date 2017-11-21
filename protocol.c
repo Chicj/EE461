@@ -14,11 +14,14 @@
 #include "ISR.h"
 
 /*********************************** Transmit Commands ***********************************/
+unsigned char sync = 0x7E;
+unsigned char source = 0x1;
 
 // TODO Test this.
 void send_packet(unsigned char dest, unsigned char cntrl, unsigned long clockSent, unsigned long clockData, unsigned char *info){
   unsigned short i, length, FCS;
-  unsigned char *temp, *packet, *timeSent, *timeData;
+  char *timeSent, *timeData;
+  unsigned char *temp, *packet;
 
   // Insert ADDR, and CNTRL
   temp[0] = (source << 4) | dest;
@@ -26,7 +29,8 @@ void send_packet(unsigned char dest, unsigned char cntrl, unsigned long clockSen
   length = 2;
 
   // Insert TIMESTAMP
-  // TODO convert the clocks into an array of chars (time)
+  sprintf(timeSent, "%li", clockSent);
+  sprintf(timeData, "%li", clockData);
   for(i=0;i<4; i++){
     temp[length] = timeSent[i];
     length++;
@@ -54,6 +58,11 @@ void send_packet(unsigned char dest, unsigned char cntrl, unsigned long clockSen
   packet[i+1] = temp[i];
   }
 
+  Radio_Write_Register(TI_CCxxx0_PKTLEN, sizeof(packet));                         // Set packet length
+  Radio_Write_Register(TI_CCxxx0_PKTCTRL0, 0x00);                                 // Set to fixed byte mode
+  Radio_Write_Burst_Registers(TI_CCxxx0_TXFIFO, packet, sizeof(packet));          // Write TX data
+
+  Radio_Strobe(TI_CCxxx0_STX);                                                    // Set radio to transmit
 }
 
 //TODO test this.

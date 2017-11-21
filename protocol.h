@@ -11,8 +11,6 @@
 // function list
 void insert_FCS(unsigned char *dat);
 void bitstuff(unsigned char *dat);
-
-unsigned char sync = 0x7E;
-unsigned char source = 0x1;
+void send_packet(unsigned char dest, unsigned char cntrl, unsigned long clockSent, unsigned long clockData, unsigned char *info);
 
 #endif
