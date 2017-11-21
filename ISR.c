@@ -14,8 +14,6 @@
 #include "peripheral.h"
 #include "pins.h"
 
-unsigned long timerA = 0; // start interrupt timer for virtual clock 
-
 void Radio_Interrupt_Setup(void){ // Enable RX interrupts only!  TX interrupt enabled in TX Start
   // Use GDO0 and GDO2 as interrupts to control TX/RX of radio
   P1DIR = 0;          // Port 1 configured as inputs (i.e. GDO0 and GDO2 are inputs)
@@ -93,18 +91,17 @@ void UART_IR(void) __interrupt[USCI_A1_VECTOR]{
 //******************************************************************* TIMER A *********************************************************
 void TimerA_Setup(void){ 
   TA0CTL |= TASSEL_2|MC_2|TACLR;   // use SMCLK | count mode | clear TAR
-  TA0CCTL1 |= CCIE;          // enables interrupts on capture compare mode 
-  TA0CCR1 = 1;           //set ACLK capture point, ACLK = 32.84 kHz, used half that value to make a more accurate clock
+  TA0CCTL1 |= CCIE;                // enables interrupts on capture compare mode 
+  TA0CCR1 = 1;                     //TODO set ACLK capture point, ACLK = 32.84 kHz,
 }
 
 void TIMER_A0_ISR(void)__interrupt[TIMER0_A1_VECTOR]
 {
   switch(TA0IV){
-    case TA0IV_TA0CCR1:    // dont use TA0IV_TA0CCR0 
-      //start making temperature measurments every 2x per sec.
-      P1OUT ^=BIT0; // blink a led
-      TA0CCR1 += 1; // for a one second timer
-      timerA++;  // increment for time info 
+    case TA0IV_TA0CCR1:       // dont use TA0IV_TA0CCR0 
+      P1OUT ^=BIT0;           // blink a led
+      TA0CCR1 += 1;           //TODO set this to something that makes sence 
+      time_tick++;            // increment for time info 
     break;
     default:
     break;

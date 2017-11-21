@@ -56,7 +56,7 @@ void Radio_SPI_setup(void){
  */
  }
 
-//**************************************************************** UART*************************************
+//**************************************************************** UART *************************************
 // UART UCA1 on MSP-EXP430F5438 is connected to USB
 //SET UP UART 
 void UART_INIT(void){
@@ -83,3 +83,37 @@ void Send_UART(char * mystring){
   }
 }
 
+//**************************************************************** TIMER A *************************************
+unsigned long time_tick = 0; // This is the virtual clock var
+
+//get current ticker time
+unsigned long get_time_tick(void){
+  unsigned long tmp;
+  int en =_DINT();                    // disable all interrupts --> GIE = 0 (LOW)
+  tmp=time_tick;
+  if(en){
+  _EINT();                            // enable all interrupts --> GIE = 1 (HIGH)
+  }
+  return tmp;
+}
+
+//set current ticker time
+void set_time_tick(unsigned long nt){
+  int en = _DINT();                   // disable all interrupts --> GIE = 0 (LOW)
+  time_tick=nt;
+  if(en){
+   _EINT();                           // enable all interrupts --> GIE = 1 (HIGH)
+  }
+}
+
+//set current ticker time and return old time
+unsigned long setget_time_tick(unsigned long nt){
+  unsigned long tmp;
+  int en = _DINT();                   // disable all interrupts --> GIE = 0 (LOW)
+  tmp=time_tick;
+  time_tick=nt;
+  if(en){
+  _EINT();                            // enable all interrupts --> GIE = 1 (HIGH)
+  }
+  return tmp;
+}

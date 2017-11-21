@@ -120,8 +120,8 @@ SYMBOLS BY VALUE
     1c08 IDATA0     _globali            
     1c0a IDATA0     _TX_state           
     1c0c            ___end_IDATA0       
-    1c0c UDATA0     _mystring           
     1c0c            ___begin_UDATA0     
+    1c0c UDATA0     _mystring           
     1c3e UDATA0     _UARTBuff           
     1ca2 UDATA0     _status             
     1ca4 UDATA0     _state              
@@ -192,8 +192,8 @@ SYMBOLS BY VALUE
     7e1a CODE       ___float32_lt       
     7e36 CODE       ___float32_eq       
     7e46 CODE       _modff              
-    7edc CODE       _floor              
     7edc CODE       _floorf             
+    7edc CODE       _floor              
     7fac CODE       _fmod               
     7fac CODE       _fmodf              
     811e CODE       _fabsf              
