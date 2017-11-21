@@ -14,6 +14,8 @@
 #include "peripheral.h"
 #include "pins.h"
 
+unsigned long timerA = 0; // start interrupt timer for virtual clock 
+
 void Radio_Interrupt_Setup(void){ // Enable RX interrupts only!  TX interrupt enabled in TX Start
   // Use GDO0 and GDO2 as interrupts to control TX/RX of radio
   P1DIR = 0;          // Port 1 configured as inputs (i.e. GDO0 and GDO2 are inputs)
@@ -67,23 +69,44 @@ void UART_IR(void) __interrupt[USCI_A1_VECTOR]{
         //save UART input
             RxBuffer[globali]=UCA1RXBUF;    // save UART into buffer 
             UCA1TXBUF = RxBuffer[globali];  // loop input chars back to terminal 
-            RxBuffer[globali+1] = NULL;         // make sure the RxBuffer ends with a null 
-            while(!(UCA1IFG & UCTXIFG));  // delay for UART TX
+            RxBuffer[globali+1] = NULL;     // make sure the RxBuffer ends with a null 
+            while(!(UCA1IFG & UCTXIFG));    // delay for UART TX
 
           if(RxBuffer[globali] == '\r' ||RxBuffer[globali] == '\n'){ // check input string for new line
-            UCA1TXBUF = '\n';             // start a new line
-            while(!(UCA1IFG & UCTXIFG));  // delay for UART TX
+            UCA1TXBUF = '\n';               // start a new line
+            while(!(UCA1IFG & UCTXIFG));    // delay for UART TX
 
             
-            globali = 0;        // reset global counter       
+            globali = 0;                      // reset global counter       
             while(mystring[globali] != '\0'){ //print # of chars input 
-              UCA1TXBUF = mystring[globali]; // spit out # of entered chars
-              while(!(UCA1IFG & UCTXIFG));  // delay for UART TX
-              globali++;  // increment counter
+              UCA1TXBUF = mystring[globali];  // spit out # of entered chars
+              while(!(UCA1IFG & UCTXIFG));    // delay for UART TX
+              globali++;                      // increment counter
             }
-            globali=0;  // reset global counter 
+            globali=0;                        // reset global counter 
 
           }
       break;
+   }
+}
+
+//******************************************************************* TIMER A *********************************************************
+void TimerA_Setup(void){ 
+  TA0CTL |= TASSEL_2|MC_2|TACLR;   // use SMCLK | count mode | clear TAR
+  TA0CCTL1 |= CCIE;          // enables interrupts on capture compare mode 
+  TA0CCR1 = 1;           //set ACLK capture point, ACLK = 32.84 kHz, used half that value to make a more accurate clock
+}
+
+void TIMER_A0_ISR(void)__interrupt[TIMER0_A1_VECTOR]
+{
+  switch(TA0IV){
+    case TA0IV_TA0CCR1:    // dont use TA0IV_TA0CCR0 
+      //start making temperature measurments every 2x per sec.
+      P1OUT ^=BIT0; // blink a led
+      TA0CCR1 += 1; // for a one second timer
+      timerA++;  // increment for time info 
+    break;
+    default:
+    break;
    }
 }

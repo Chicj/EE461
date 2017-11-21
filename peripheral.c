@@ -48,12 +48,12 @@ void Radio_SPI_setup(void){
    DecrementVcore();
    DecrementVcore();
    DecrementVcore();
-
-  // TAxCCRn = Content of capture/compare register n will set the count up to val
-  TA1CCR0 = TOTALCOUNT; // set count up val 
-  TA1CCR1 = 94;   //P8.6  75%
-  TA1CCR2 = 32;   //P7.3  25%
   
+  /*// (default SELREF for FLLREFCLK is XT1CLK = 32*1024 = 32768 Hz = 32.768 KHz)
+  UCSCTL2 = 511;                          // Setting the freq multiplication factor * 32768 for final clk freq @ 16744448 Hz
+  UCSCTL1 |= DCORSEL_4;                   // This sets the DCO frequency pg26 data sheet 12.3 -- 28.3 MHz
+  UCSCTL4 |= SELA__DCOCLKDIV + SELA_0;    // set output of FLLREFCLK --> DCOCLKDIV to input of ACLK | setup ACLK 
+ */
  }
 
 //**************************************************************** UART*************************************

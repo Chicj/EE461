@@ -6,7 +6,8 @@
 #define CC2500_GDO2_IV      P1IV_P1IFG3  // interrupt on P1.1
 
 void Radio_Interrupt_Setup(void); // Enable RX interrupts only!  TX interrupt enabled in TX Start (transmit.c)!
+void TimerA_Setup(void);          // Setup timer interrupt 
 
-
+extern unsigned long timerA;
 
 #endif
