@@ -7,6 +7,8 @@
 
 #include <msp430f5438a.h>
 #include <msp430.h>
+#include <string.h>
+#include <stdio.h>
 #include "peripheral.h"
 #include "radiocmds.h"
 #include "pins.h"
@@ -79,10 +81,44 @@ void Send_UART(char * mystring){
     while(mystring[i] != '\0'){   //print # of chars input 
     UCA1TXBUF = mystring[i];      // spit out # of entered chars
     while(!(UCA1IFG & UCTXIFG));  // delay for UART TX
-    i++;                    // increment counter
+    i++;                          // increment counter
   }
 }
 
+// ADD TERMINAL COMMANDS HERE
+int parse_UART(char *UARTBuff){ 
+  if(~(strcmp(UARTBuff,"Tx")  | strcmp(UARTBuff,"TX") | strcmp(UARTBuff,"tx"))){
+    Send_Dummy(); // TODO replace this with actual Tx command
+  }
+  else if(~(strcmp(UARTBuff,"status")  | strcmp(UARTBuff,"Status"))){
+    status = Radio_Read_Status(TI_CCxxx0_MARCSTATE);
+    state=status&(~(BIT7|BIT6|BIT5));         // get the state of the radio from the full status byte
+    sprintf(UARTBuff,"Radio State: 0x%02x \n\r",state);
+    Send_UART(UARTBuff);
+    while(!(UCA1IFG & UCTXIFG));
+  }
+  else if(~(strcmp(UARTBuff,"dummy")  | strcmp(UARTBuff,"Dummy"))){
+    Send_Dummy();
+    sprintf(UARTBuff,"Dummy Packet sent at %il\r\n",get_time_tick());
+    Send_UART(UARTBuff);
+    while(!(UCA1IFG & UCTXIFG));
+  }
+  else if(~(strcmp(UARTBuff,"Reset Radio")  | strcmp(UARTBuff,"Radio Reset")  | strcmp(UARTBuff,"reset radio")  | strcmp(UARTBuff,"radio reset"))){
+    Reset_Radio();
+    __delay_cycles(800);     // Wait for radio to be ready before writing registers.cc2500.pdf Table 13 indicates a power-on start-up time of 150 us for the crystal to be stable
+    Radio_Strobe(TI_CCxxx0_SRX);                  //Initialize CC2500 in Rx mode
+    sprintf(UARTBuff,"Radio reset\r\n");
+    Send_UART(UARTBuff);
+    while(!(UCA1IFG & UCTXIFG));
+  }
+  else{
+    sprintf(UARTBuff,"Enter a valid system command\r\n");
+    Send_UART(UARTBuff);
+    while(!(UCA1IFG & UCTXIFG));
+    return 1;
+  }
+return 0;
+}
 //**************************************************************** TIMER A *************************************
 unsigned long time_tick = 0; // This is the virtual clock var
 

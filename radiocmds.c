@@ -173,6 +173,9 @@ void Radio_Rx(void){
       Radio_Read_Burst_Registers(TI_CCxxx0_RXFIFO, RxBuffer, RxThrBytes);
       //TODO ADD DECODE HERE 
       status = Radio_Read_Status(TI_CCxxx0_MARCSTATE);
+      state=status&(~(BIT7|BIT6|BIT5));                   // get the state of the radio from the full status byte
+      sprintf(UARTBuff,"Radio State: 0x%02x \n\r",state);
+      Send_UART(UARTBuff);
       sprintf(UARTBuff,"Received Stuff was: \n",RxBuffer);
       Send_UART(UARTBuff);
       for(i=0; i<sizeof(RxBuffer); i++){

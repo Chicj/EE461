@@ -39,8 +39,19 @@ void main(void){
   P1OUT |= BIT0;                                // turn on a LED to indicate power
  
    _EINT();                                    // set global IR enable 
+   LPM0;
+
+}
+
+
+
+// NOTE 
+/*
+Add transmit on a button push ? 
+*/
+
+/*
   for(;;){
-    
     //streamCmd(argv[]); // make things easy to see on the CXA
     timer++;
       status = Radio_Read_Status(TI_CCxxx0_MARCSTATE);
@@ -58,11 +69,4 @@ void main(void){
       timer = 0;
     }
   }
-}
-
-
-
-// NOTE 
-/*
-Add transmit on a button push ? 
-*/
+  */
