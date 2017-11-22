@@ -20,8 +20,8 @@ unsigned char source = 0x01;
 // TODO Test this.
 void send_packet(unsigned char dest, unsigned long clockData, unsigned char *info){
   unsigned short i, length, FCS;
-  char *timeSent, *timeData;
-  unsigned char *temp, *packet, cntrl;
+  char timeSent[4], timeData[4];
+  unsigned char temp[63], packet[64], cntrl;
   unsigned long clockSent;
 
   
@@ -58,7 +58,7 @@ void send_packet(unsigned char dest, unsigned long clockData, unsigned char *inf
   bitstuff(temp);
   
   // add sync, fill into packet
-  packet [0] = sync;
+  packet[0] = sync;
   for(i=0;i<sizeof(temp);i++){
   packet[i+1] = temp[i];
   }
