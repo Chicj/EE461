@@ -18,10 +18,14 @@ unsigned char sync = 0x7E;
 unsigned char source = 0x1;
 
 // TODO Test this.
-void send_packet(unsigned char dest, unsigned char cntrl, unsigned long clockSent, unsigned long clockData, unsigned char *info){
+void send_packet(unsigned char dest, unsigned long clockData, unsigned char *info){
   unsigned short i, length, FCS;
   char *timeSent, *timeData;
-  unsigned char *temp, *packet;
+  unsigned char *temp, *packet, cntrl;
+  unsigned long clockSent;
+
+  
+  cntrl = (sizeof(info) << 6) | 0x00;
 
   // Insert ADDR, and CNTRL
   temp[0] = (source << 4) | dest;
@@ -29,6 +33,7 @@ void send_packet(unsigned char dest, unsigned char cntrl, unsigned long clockSen
   length = 2;
 
   // Insert TIMESTAMP
+  clockSent = get_time_tick();
   sprintf(timeSent, "%li", clockSent);
   sprintf(timeData, "%li", clockData);
   for(i=0;i<4; i++){
@@ -250,55 +255,138 @@ void untransition(unsigned char *indat){
   }
 }
 
-// Find the syncs within the RX buffer.
+// Find the syncs within the RX buffer, and also unstuff the extra zeros!
 // TODO Test this
 void find_sync(unsigned char *indat){
 
-  unsigned int j,k, inlen = sizeof(indat);
+  unsigned int j,k, inlen = sizeof(indat), ones = 0;
+  unsigned char firsteight;
   
+  
+  for(k=0;k<sizeof(indat);k++){
   datmask = 0x80;
-
-  for(j=0;j<8;j++){
-    switch(RXFLAG){
-      case 0:
-        if((indat[k] & datmask) == 0){
-          RXFLAG = 1;
-        } else {
-          RXFLAG = 0;
-        }
-      break;
-      case 1:                               // Found first 0.  Find next six 1's (case 1-6)
-      case 2:
-      case 3:
-      case 4:
-      case 5:
-      case 6:
-          if((indat[k] & datmask) == 0){    // Bit = 0, still at first zero
+    for(j=0;j<8;j++){
+      switch(RXFLAG)
+      {
+        case 0:
+          RxBufferPos = 0;
+          RXMASK = 0x80;
+          RxBit = 0;
+          firsteight = 0;
+          dump = 0;
+          ones = 0;
+          if((indat[k] & datmask) == 0){
             RXFLAG = 1;
           } else {
-            RXFLAG = RXFLAG + 1;            // Bit = 1, counting six one's
-          }
-          break;
-      case 7:                               // Found 0111 111, looking for last 0
-          if((indat[k] & datmask) == 0){    // Bit = 0, FOUND FLAG BYTE
-            RXFLAG = 8;
-          } else {                          // Bit = 1, Start over from beginning
             RXFLAG = 0;
           }
-      break;
-      // TODO Decide what to do when a SYNC is found
-      case 8:                               // Found SYNC. Fill more things here eventually
-        sprintf(UARTBuff,"SYNC found!");
-        Send_UART(UARTBuff);
-    }
-        
-        
+        break;
+        case 1:                               // Found first 0.  Find next six 1's (case 1-6)
+        case 2:
+        case 3:
+        case 4:
+        case 5:
+        case 6:
+            if((indat[k] & datmask) == 0){    // Bit = 0, still at first zero
+              RXFLAG = 1;
+            } else {
+              RXFLAG = RXFLAG + 1;            // Bit = 1, counting six one's
+            }
+            break;
+        case 7:                               // Found 0111 111, looking for last 0
+            if((indat[k] & datmask) == 0){    // Bit = 0, FOUND FLAG BYTE
+              RXFLAG = 8;
+            } else {                          // Bit = 1, Start over from beginning
+              RXFLAG = 0;
+            }
+        break;
+        case 8:                               // Found SYNC. Now check the address.
+          if(firsteight == 0){
+            firsteight = 1;
+          }
 
+          sprintf(UARTBuff,"SYNC found!");
+          Send_UART(UARTBuff);
+
+          // Fill first byte into RX Buffer
+          if((indat[k] & datmask) != 0){                                //put in one
+             RxBuffer[RxBufferPos] = RxBuffer[RxBufferPos] | RXMASK;
+             ones = ones+1;
+          } else {                                                      // put in zero
+             RxBuffer[RxBufferPos] = RxBuffer[RxBufferPos] & ~RXMASK;
+             ones = 0;
+          }
+
+          if(RxBit < 7){                                                // if not last bit in RxBuffer[k]
+            RXMASK = RXMASK>>1;                                         // shift to next bit in RxBuffer[k]
+            RxBit=RxBit+1;                                              // increment bit counter for RxBuffer[k]
+          } else {                                                      // just processed last bit in RxBuffer[k]
+             RXMASK = 0x80;                                             // reset outdatmask to point to MSB
+             RxBit=0;                                                   // reset bit pointer for RxBuffer[k]
+             if(RxBuffer[RxBufferPos] != 0x7E){                         // If didn't receive another FLAG byte, save else dump byte
+               if((RxBuffer[RxBufferPos] << 4) != (source << 4)){       //NOTE Im dubious about this part. Intent is to check Dest Address.
+                firsteight=0;
+                RXFLAG = 0;
+               } else {
+                RxBufferPos=RxBufferPos+1;                              // increment to next byte in RxBuffer
+                ones = 0;
+                RXFLAG = 9;
+                firsteight=0;
+               }
+            }
+          }
+        break;
+        case 9:                                                         // Pull the RX buffer and unstuff
+          if(firsteight == 0) {
+            firsteight = 1;
+          }
+          if((indat[k] & datmask) != 0){                                  //put in one
+            RxBuffer[RxBufferPos] = RxBuffer[RxBufferPos] | RXMASK;
+            ones = ones+1;
+            if(RxBit < 7){                                                // if not last bit in RxBuffer[k]
+              RXMASK = RXMASK>>1;                                         // shift to next bit in RxBuffer[k]
+              RxBit=RxBit+1;                                              // increment bit counter for RxBuffer[k]
+            } else {                                                      // just processed last bit in RxBuffer[k]
+              RXMASK = 0x80;                                              // reset RXMASK to point to MSB
+              RxBit=0;                                                    // reset bit pointer for RxBuffer[k]
+           // TODO update this so that is reads the length of the packet, not look for ending flags
+              if(RxBuffer[RxBufferPos] != 0x7E){                          // If didn't receive another FLAG byte, save else dump byte
+                RxBufferPos=RxBufferPos+1;                                // increment to next byte in RxBuffer
+              } else {                                                    // Just received END FLAG BYTE
+                RXFLAG = 10;
+              }
+            }
+          } else {                                                        // put in zero, or not if it was a bit stuff zero
+            if(ones != 5) {                                               // If not five ones then save the zero and increment
+              RxBuffer[RxBufferPos] = RxBuffer[RxBufferPos] & ~RXMASK;
+              if(RxBit < 7){                                                // if not last bit in RxBuffer[k]
+                RXMASK = RXMASK>>1;                                         // shift to next bit in RxBuffer[k]
+                RxBit=RxBit+1;                                              // increment bit counter for RxBuffer[k]
+              } else {                                                      // just processed last bit in RxBuffer[k]
+                RXMASK = 0x80;                                              // reset RXMASK to point to MSB
+                RxBit=0;                                                    // reset bit pointer for RxBuffer[k]
+             // TODO update this so that is reads the length of the packet, not look for ending flags
+                if(RxBuffer[RxBufferPos] != 0x7E){                          // If didn't receive another FLAG byte, save else dump byte
+                  RxBufferPos=RxBufferPos+1;                                // increment to next byte in RxBuffer
+                } else {                                                    // Just received END FLAG BYTE
+                  RXFLAG = 10;
+                }
+              }
+            } else {                                                      // If five ones then don't save the zero and don't increment
+            }
+            ones = 0;
+          }
+        break;
+        case 10: // TODO is there anything else that needs to be done here?
+          RXBuffer_Len = RxBufferPos;
+          RXFLAG = 0;
+          ones = 0;
+        break;
+      }
+      datmask = datmask>>1;
+    }
   }
 
 }
 
-void RX_Test(unsigned char *dat){
-
-}
   

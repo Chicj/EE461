@@ -19,7 +19,7 @@ char Radio_Read_Register(char addr);
 void Radio_Read_Burst_Registers(char,unsigned char *, int);
 char Radio_Read_Status(char addr);
 char Radio_Strobe(char);
-void Radio_Write_Registers(char addr, char value);
+void Radio_Write_Register(char addr, char value);
 void Radio_Write_Burst_Registers(char,unsigned char *, int);
 void Reset_Radio(void);
 void TI_CC_Wait(unsigned int);

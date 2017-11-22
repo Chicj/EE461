@@ -32,7 +32,6 @@ void main(void){
   Radio_Strobe(TI_CCxxx0_SRX);                  //Initialize CC2500 in Rx mode
   UART_INIT();                                  // UART is set to 460800 baud | odd parity| LSB| 8 bit| one stop bit
   TimerA_Setup();                               // Start an ACLK fed TIMERA capture compare 
-
   Send_UART("EE646 WSN code.\r\n");
 
   P1DIR |= BIT0 | BIT1;                         // Set LED pin DIR

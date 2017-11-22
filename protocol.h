@@ -11,6 +11,9 @@
 // function list
 void insert_FCS(unsigned char *dat);
 void bitstuff(unsigned char *dat);
-void send_packet(unsigned char dest, unsigned char cntrl, unsigned long clockSent, unsigned long clockData, unsigned char *info);
+void send_packet(unsigned char dest, unsigned long clockData, unsigned char *info);
+
+extern unsigned char RxBuffer[], RXMASK, RxBit;
+extern unsigned int RxBuffer_len, RxBufferPos, RxBytesRemaining, RXBuffer_Len;
 
 #endif
