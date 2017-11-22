@@ -38,9 +38,7 @@ void main(void){
   P1OUT |= BIT0;                                // turn on a LED to indicate power
  
    _EINT();                                    // set global IR enable 
-   //LPM0;
-  for(;;){
-  }
+   LPM0;
 }
 
 

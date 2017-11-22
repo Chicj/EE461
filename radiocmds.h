@@ -30,8 +30,8 @@ void Send_Dummy(void);
 void radio_stream(char *);
 
 //Create event flags for the radio FIFO
-#define TxThrBytes 30   
-#define RxThrBytes 30
+#define TxThrBytes 33   // Tx and Rx FIFO threshold  
+#define RxThrBytes 32
 
 // ISR state defs for TX_state
 #define IDLE         0

@@ -11,9 +11,10 @@
 #include "radiocmds.h"
 #include "pins.h"
 #include "peripheral.h"
+#include "protocol.h"
 
 char status;
-unsigned char TxBuffer[], RxBuffer[70], RxTemp[30];
+unsigned char TxBuffer[], RxBuffer[70], RxTemp[40];
 unsigned int TxBuffer_Len, TxBufferPos=0, TxBytesRemaining, RxBuffer_Len=0, RxBufferPos=0, RxBytesRemaining, state;
 
 
@@ -172,7 +173,7 @@ void Radio_Rx(void){
       // Then wait until interrupt received again.
       //(char addr, unsigned char *buffer, int count, int radio_select)
       int i;
-      Radio_Read_Burst_Registers(TI_CCxxx0_RXFIFO, RxBuffer, RxThrBytes);
+      Radio_Read_Burst_Registers(TI_CCxxx0_RXFIFO, RxTemp, RxThrBytes);
       //TODO ADD DECODE HERE 
       status = Radio_Read_Status(TI_CCxxx0_MARCSTATE);
       state=status&(~(BIT7|BIT6|BIT5));                   // get the state of the radio from the full status byte
