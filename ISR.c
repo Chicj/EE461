@@ -33,7 +33,6 @@ void  Port1_ISR (void) __interrupt[PORT1_VECTOR]{
             sprintf(UARTBuff,"Radio State: 0x%02x \n\r",state);
             Send_UART(UARTBuff);
             find_sync(RxTemp);
-
             P1OUT ^= BIT1;
         break;
     // TX state
