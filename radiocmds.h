@@ -46,7 +46,6 @@ void radio_stream(char *);
 #define RX_START     4
 #define RX_RUNNING   5
 
-// TODO Explain to Justin why this is necessary. Doesn't include take care of this? Why do we need to declare these here and in the radiocmds.c?
 // External variables to be used across the project
 extern unsigned char TxBuffer[], RxBuffer[], RxTemp[];
 extern unsigned int TxBuffer_Len, TxBufferPos, TxBytesRemaining, RxBuffer_Len,  RxBufferPos, RxBytesRemaining, state;

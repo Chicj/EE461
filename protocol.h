@@ -13,7 +13,6 @@ void insert_FCS(unsigned char *dat);
 void bitstuff(unsigned char *dat);
 void send_packet(unsigned char dest, unsigned long clockData, unsigned char *info);
 
-extern unsigned char RxBuffer[], RXMASK, RxBit;
-extern unsigned int RxBuffer_len, RxBufferPos, RxBytesRemaining, RXBuffer_Len;
+extern unsigned char RXMASK, RxBit;
 
 #endif

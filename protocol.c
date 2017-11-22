@@ -15,7 +15,7 @@
 
 /*********************************** Transmit Commands ***********************************/
 unsigned char sync = 0x7E;
-unsigned char source = 0x1;
+unsigned char source = 0x01;
 
 // TODO Test this.
 void send_packet(unsigned char dest, unsigned long clockData, unsigned char *info){
@@ -185,7 +185,7 @@ void bitstuff(unsigned char *dat){
 
 /************************************* Receive Commands ********************************************/
 unsigned int RX_SR = 0; dump, bit, RX_ST;
-unsigned char RX_SR17 = 0, datmask, RXFLAG = 0;
+unsigned char RX_SR17 = 0, datmask, RXFLAG = 0, RXMASK = 0x80, RxBit = 0;
 
 // Unscramble the RX buffer
 // TODO Test this
@@ -259,7 +259,7 @@ void untransition(unsigned char *indat){
 // TODO Test this
 void find_sync(unsigned char *indat){
 
-  unsigned int j,k, inlen = sizeof(indat), ones = 0;
+  unsigned int j,k, inlen = sizeof(indat), ones = 0, remainingBits;
   unsigned char firsteight;
   
   
@@ -323,20 +323,56 @@ void find_sync(unsigned char *indat){
           } else {                                                      // just processed last bit in RxBuffer[k]
              RXMASK = 0x80;                                             // reset outdatmask to point to MSB
              RxBit=0;                                                   // reset bit pointer for RxBuffer[k]
-             if(RxBuffer[RxBufferPos] != 0x7E){                         // If didn't receive another FLAG byte, save else dump byte
+             if(RxBuffer[RxBufferPos] != sync){                         // If didn't receive another FLAG byte, save else dump byte
                if((RxBuffer[RxBufferPos] << 4) != (source << 4)){       //NOTE Im dubious about this part. Intent is to check Dest Address.
                 firsteight=0;
                 RXFLAG = 0;
+                sprintf(UARTBuff,"Address was correct!");
+                Send_UART(UARTBuff);
                } else {
                 RxBufferPos=RxBufferPos+1;                              // increment to next byte in RxBuffer
                 ones = 0;
                 RXFLAG = 9;
                 firsteight=0;
+                sprintf(UARTBuff,"Address was incorrect...");
+                Send_UART(UARTBuff);
                }
             }
           }
         break;
-        case 9:                                                         // Pull the RX buffer and unstuff
+        case 9:                                                         // Read Packet Length
+          if(firsteight == 0){
+            firsteight = 1;
+          }
+
+          // Fill byte into RX Buffer
+          if((indat[k] & datmask) != 0){                                //put in one
+             RxBuffer[RxBufferPos] = RxBuffer[RxBufferPos] | RXMASK;
+             ones = ones+1;
+          } else {                                                      // put in zero
+             RxBuffer[RxBufferPos] = RxBuffer[RxBufferPos] & ~RXMASK;
+             ones = 0;
+          }
+
+          if(RxBit < 7){                                                // if not last bit in RxBuffer[k]
+            RXMASK = RXMASK>>1;                                         // shift to next bit in RxBuffer[k]
+            RxBit=RxBit+1;                                              // increment bit counter for RxBuffer[k]
+          } else {                                                      // just processed last bit in RxBuffer[k]
+            remainingBits = RxBuffer[RxBufferPos]+11;
+            sprintf(UARTBuff,"packet length was %i bytes", remainingBits);
+            Send_UART(UARTBuff);
+            RXMASK = 0x80;                                              // reset outdatmask to point to MSB
+            RxBit=0;                                                    // reset bit pointer for RxBuffer[k]
+            RxBufferPos=RxBufferPos+1;                                  // increment to next byte in RxBuffer
+            ones = 0;
+            RXFLAG = 9;
+            firsteight=0;
+            sprintf(UARTBuff,"SYNC found!");
+            Send_UART(UARTBuff);
+          }
+
+        break;
+        case 10:                                                          // Pull the RX buffer and unstuff
           if(firsteight == 0) {
             firsteight = 1;
           }
@@ -349,11 +385,11 @@ void find_sync(unsigned char *indat){
             } else {                                                      // just processed last bit in RxBuffer[k]
               RXMASK = 0x80;                                              // reset RXMASK to point to MSB
               RxBit=0;                                                    // reset bit pointer for RxBuffer[k]
-           // TODO update this so that is reads the length of the packet, not look for ending flags
-              if(RxBuffer[RxBufferPos] != 0x7E){                          // If didn't receive another FLAG byte, save else dump byte
+              if(remainingBits != 0){                          // If didn't receive another FLAG byte, save else dump byte
                 RxBufferPos=RxBufferPos+1;                                // increment to next byte in RxBuffer
+                remainingBits = remainingBits-1;
               } else {                                                    // Just received END FLAG BYTE
-                RXFLAG = 10;
+                RXFLAG = 11;
               }
             }
           } else {                                                        // put in zero, or not if it was a bit stuff zero
@@ -365,11 +401,11 @@ void find_sync(unsigned char *indat){
               } else {                                                      // just processed last bit in RxBuffer[k]
                 RXMASK = 0x80;                                              // reset RXMASK to point to MSB
                 RxBit=0;                                                    // reset bit pointer for RxBuffer[k]
-             // TODO update this so that is reads the length of the packet, not look for ending flags
-                if(RxBuffer[RxBufferPos] != 0x7E){                          // If didn't receive another FLAG byte, save else dump byte
+                if(remainingBits != 0){                          // If didn't receive another FLAG byte, save else dump byte
                   RxBufferPos=RxBufferPos+1;                                // increment to next byte in RxBuffer
+                  remainingBits = remainingBits-1;
                 } else {                                                    // Just received END FLAG BYTE
-                  RXFLAG = 10;
+                  RXFLAG = 11;
                 }
               }
             } else {                                                      // If five ones then don't save the zero and don't increment
@@ -377,8 +413,8 @@ void find_sync(unsigned char *indat){
             ones = 0;
           }
         break;
-        case 10: // TODO is there anything else that needs to be done here?
-          RXBuffer_Len = RxBufferPos;
+        case 11: // TODO is there anything else that needs to be done here?
+          RxBuffer_Len = RxBufferPos;
           RXFLAG = 0;
           ones = 0;
         break;

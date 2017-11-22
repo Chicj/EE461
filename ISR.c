@@ -27,29 +27,17 @@ void  Port1_ISR (void) __interrupt[PORT1_VECTOR]{
     //reading automatically resets the flag for the returned state
     switch(P1IV){
        case CC2500_GDO0_IV: // [CC2500_GDO0] RX is set up to assert when RX FIFO is greater than FIFO_THR.  This is an RX function only
-            Radio_Rx(); // read Rx buffer
+            Radio_Read_Burst_Registers(TI_CCxxx0_RXFIFO, RxTemp, RxThrBytes);
+            status = Radio_Read_Status(TI_CCxxx0_MARCSTATE);
+            state=status&(~(BIT7|BIT6|BIT5));
+            sprintf(UARTBuff,"Radio State: 0x%02x \n\r",state);
+            Send_UART(UARTBuff);
+            find_sync(RxTemp);
+
             P1OUT ^= BIT1;
         break;
     // TX state
         case CC2500_GDO2_IV: //[CC2500_GDO2] TX is set up to assert when TX FIFO is above FIFO_THR threshold.            
-          switch(TX_state) 
-          {
-              case IDLE:  
-                   break;
-              case TX_START:  //Called on falling edge of GDO2, Tx FIFO < threshold, Radio in TX mode, Packet in progress
-                    //Radio_TX();
-                   break;
-              case TX_RUNNING: //Called on falling edge of GDO2, Tx FIFO < threshold, Radio in TX mode, Packet in progress
-                    Radio_TX_Running();
-
-                   break;
-              case TX_END:     //Called on falling edge of GDO2, Tx FIFO < threshold, Radio in TX mode, Last part of packet to transmit
-                   Radio_TX_End();
-                   
-                   break;
-              default:
-                break;         
-          } 
         break;
         default:
         break;
