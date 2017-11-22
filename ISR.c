@@ -38,7 +38,7 @@ void  Port1_ISR (void) __interrupt[PORT1_VECTOR]{
     // TX state
         case CC2500_GDO2_IV: //[CC2500_GDO2] TX is set up to assert when TX FIFO is above FIFO_THR threshold.            
         break;
-        default:
+        default: 
         break;
         }
 }
