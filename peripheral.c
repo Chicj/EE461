@@ -10,11 +10,14 @@
 #include <string.h>
 #include <stdio.h>
 #include "peripheral.h"
+#include "protocol.h"
 #include "radiocmds.h"
 #include "pins.h"
 
-char UARTBuff[100]; // scratch pad for UART buffer
+char UARTBuff[UARTBuff_Size]; // scratch pad for UART buffer
 unsigned int  TX_state = IDLE;
+unsigned char inf[23] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17};
+
 
 /******************************************* SPI  Setup ***************************************/
 
@@ -87,37 +90,49 @@ void Send_UART(char * mystring){
 
 // ADD TERMINAL COMMANDS HERE
 int parse_UART(char *UARTBuff){ 
-  if(~(strcmp(UARTBuff,"Tx")  | strcmp(UARTBuff,"TX") | strcmp(UARTBuff,"tx"))){
-    Send_Dummy(); // TODO replace this with actual Tx command
+  if(strcmp(UARTBuff,"tx\r") == 0){
+    send_packet(0x00,get_time_tick(),inf);
+    sprintf(UARTBuff,"Packet sent at %il\r\n",time_tick);
+    Send_UART(UARTBuff);
+    while(!(UCA1IFG & UCTXIFG));
   }
-  else if(~(strcmp(UARTBuff,"status")  | strcmp(UARTBuff,"Status"))){
+  else if(strcmp(UARTBuff,"status\r") == 0){
     status = Radio_Read_Status(TI_CCxxx0_MARCSTATE);
     state=status&(~(BIT7|BIT6|BIT5));         // get the state of the radio from the full status byte
     sprintf(UARTBuff,"Radio State: 0x%02x \n\r",state);
     Send_UART(UARTBuff);
     while(!(UCA1IFG & UCTXIFG));
   }
-  else if(~(strcmp(UARTBuff,"dummy")  | strcmp(UARTBuff,"Dummy"))){
+  else if(strcmp(UARTBuff,"dummy\r") == 0){
     Send_Dummy();
     sprintf(UARTBuff,"Dummy Packet sent at %il\r\n",get_time_tick());
     Send_UART(UARTBuff);
     while(!(UCA1IFG & UCTXIFG));
   }
-  else if(~(strcmp(UARTBuff,"Reset Radio")  | strcmp(UARTBuff,"Radio Reset")  | strcmp(UARTBuff,"reset radio")  | strcmp(UARTBuff,"radio reset"))){
+  else if(strcmp(UARTBuff,"reset radio\r") == 0){
+    _DINT();
     Reset_Radio();
     __delay_cycles(800);     // Wait for radio to be ready before writing registers.cc2500.pdf Table 13 indicates a power-on start-up time of 150 us for the crystal to be stable
+    Write_RF_Settings();                
     Radio_Strobe(TI_CCxxx0_SRX);                  //Initialize CC2500 in Rx mode
+    P1IFG = 0;          // Clear all flags <-- do this after IES as it will set a BIT2 high (pg 413 family user guide)
+    _EINT();
     sprintf(UARTBuff,"Radio reset\r\n");
     Send_UART(UARTBuff);
     while(!(UCA1IFG & UCTXIFG));
   }
-  else{
-    sprintf(UARTBuff,"Enter a valid system command\r\n");
+  else if(strcmp(UARTBuff,"help\r") == 0){
+    sprintf(UARTBuff,"COMMAND LIST:\r\ntx\r\nstatus\r\ndummy\r\nreset radio\r\n");
     Send_UART(UARTBuff);
     while(!(UCA1IFG & UCTXIFG));
-    return 1;
   }
-return 0;
+  else{
+    sprintf(UARTBuff,"COMMAND LIST:\r\ntx\r\nstatus\r\ndummy\r\nreset radio\r\n");
+    Send_UART(UARTBuff);
+    while(!(UCA1IFG & UCTXIFG));
+  }
+  //memset(UARTBuff,NULL,UARTBuff_Size);
+  return 0;
 }
 //**************************************************************** TIMER A *************************************
 unsigned long time_tick = 0; // This is the virtual clock var

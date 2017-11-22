@@ -26,4 +26,6 @@ unsigned long setget_time_tick(unsigned long);
 extern char UARTBuff[];           // UART scratch pad
 extern unsigned int TX_state;
 extern unsigned long time_tick;
+
+#define UARTBuff_Size 50
 #endif
