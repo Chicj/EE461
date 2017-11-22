@@ -25,11 +25,6 @@ void Reset_Radio(void);
 void TI_CC_Wait(unsigned int);
 void Write_RF_Settings(void); 
 void Radio_Rx(void);
-void Radio_Tx(char *,char);
-
-void Radio_TX(char *,char );
-void Radio_TX_Running(void);
-void Radio_TX_End(void);
 
 void Send_Dummy(void);
 void radio_stream(char *);

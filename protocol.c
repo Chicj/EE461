@@ -67,7 +67,7 @@ void send_packet(unsigned char dest, unsigned long clockData, unsigned char *inf
   Radio_Write_Register(TI_CCxxx0_PKTCTRL0, 0x00);                                 // Set to fixed byte mode
   Radio_Write_Burst_Registers(TI_CCxxx0_TXFIFO, packet, sizeof(packet));          // Write TX data
 
-  Radio_Strobe(TI_CCxxx0_STX);                                                    // Set radio to transmit
+  Radio_Strobe(TI_CCxxx0_STX);                                                    // Set radio to transmit                                                // Set radio to transmit
 }
 
 //TODO test this.

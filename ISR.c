@@ -27,11 +27,8 @@ void  Port1_ISR (void) __interrupt[PORT1_VECTOR]{
     //reading automatically resets the flag for the returned state
     switch(P1IV){
        case CC2500_GDO0_IV: // [CC2500_GDO0] RX is set up to assert when RX FIFO is greater than FIFO_THR.  This is an RX function only
-            Radio_Read_Burst_Registers(TI_CCxxx0_RXFIFO, RxTemp, RxThrBytes);
-            status = Radio_Read_Status(TI_CCxxx0_MARCSTATE);
-            state=status&(~(BIT7|BIT6|BIT5));
-            sprintf(UARTBuff,"Radio State: 0x%02x \n\r",state);
-            Send_UART(UARTBuff);
+            
+            Radio_Rx();
             find_sync(RxTemp);
             P1OUT ^= BIT1;
         break;
@@ -40,7 +37,7 @@ void  Port1_ISR (void) __interrupt[PORT1_VECTOR]{
         break;
         default: 
         break;
-        }
+    }
 }
 
 //**************************************************************** UART ISR ************************************************************
@@ -74,7 +71,7 @@ void UART_IR(void) __interrupt[USCI_A1_VECTOR]{
             globali++;
           }
       break;
-   }
+  }
 }
 
 //******************************************************************* TIMER A *********************************************************

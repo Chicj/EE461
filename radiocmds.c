@@ -163,6 +163,8 @@ void TI_CC_Wait(unsigned int cycles){
   while(cycles>15)                              // 15 cycles consumed by overhead
     cycles = cycles - 6;                        // 6 cycles consumed each iteration
 }
+
+/******************************************** Specialized Radio Commands **************************************************/
 void Radio_Rx(void){
       // Triggered by GDO0 interrupt     
       // Entering here indicates that the RX FIFO is more than half filed.
@@ -176,32 +178,15 @@ void Radio_Rx(void){
       state=status&(~(BIT7|BIT6|BIT5));                   // get the state of the radio from the full status byte
       sprintf(UARTBuff,"Radio State: 0x%02x \n\r",state);
       Send_UART(UARTBuff);
-      sprintf(UARTBuff,"Received Stuff was: \n",RxBuffer);
+      sprintf(UARTBuff,"Received Stuff was: \n",RxTemp);
       Send_UART(UARTBuff);
-      for(i=0; i<sizeof(RxBuffer); i++){
-        sprintf(UARTBuff,"0x%02x, ",RxBuffer[i]);
+      for(i=0; i<sizeof(RxTemp); i++){
+        sprintf(UARTBuff,"0x%02x, ",RxTemp[i]);
         Send_UART(UARTBuff);
       }
       sprintf(UARTBuff,"\n-----end packet-----\n");
       Send_UART(UARTBuff);
 }
-
-
-void Radio_TX(char *TxBuffer,char TxBuffer_Len){
-  TX_state = TX_START; 
-      TxBufferPos = 0;
-    
-}
-
-void Radio_TX_Running(void){
-  TX_state = TX_RUNNING; 
-}
-
-void Radio_TX_End(void){
-  TX_state = IDLE; 
-
-}
-/******************************************** Specialized Radio Commands **************************************************/
 
 // Function to transmit a known dummy packet
 void Send_Dummy(void){
