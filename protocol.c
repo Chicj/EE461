@@ -18,7 +18,7 @@ unsigned char sync = 0x7E;
 unsigned char source = 0x01;
 
 // TODO Test this.
-void send_packet(unsigned char dest, unsigned long clockData, unsigned char *info){
+void send_packet(unsigned char dest, unsigned long clockData, unsigned char *info, unsigned char infoLength){
   unsigned short i, length, FCS;
   char timeSent[4], timeData[4];
   unsigned char temp[63], packet[64], cntrl;
@@ -46,21 +46,22 @@ void send_packet(unsigned char dest, unsigned long clockData, unsigned char *inf
   }
 
   // Insert INFO
-  for(i=0;i<sizeof(info); i++){
+  for(i=0;i<infoLength; i++){
     temp[length] = info[i];
     length++;
+    Send_UART(UARTBuff);
   }
 
   // Insert FCS
   insert_FCS(temp);
 
   // Bitstuff
-  bitstuff(temp);
+  // bitstuff(temp);
   
   // add sync, fill into packet
   packet[0] = sync;
-  for(i=0;i<sizeof(temp);i++){
-  packet[i+1] = temp[i];
+  for(i=0;i<infoLength;i++){
+    packet[i+1] = temp[i];
   }
 
   Radio_Write_Register(TI_CCxxx0_PKTLEN, sizeof(packet));                         // Set packet length

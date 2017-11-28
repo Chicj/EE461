@@ -13,6 +13,7 @@
 #include "radiocmds.h"
 #include "peripheral.h"
 #include "pins.h"
+#include "protocol.h"
 
 void Radio_Interrupt_Setup(void){ // Enable RX interrupts only!  TX interrupt enabled in TX Start
   // Use GDO0 and GDO2 as interrupts to control TX/RX of radio
