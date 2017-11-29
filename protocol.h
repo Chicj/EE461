@@ -9,11 +9,11 @@
 #define _PROTOCOL_H
 
 // function list
-void insert_FCS(unsigned char *dat);
-void bitstuff(unsigned char *dat);
+void insert_FCS(unsigned char *dat, unsigned int datLength);
+void bitstuff(unsigned char *dat, unsigned int len);
 void send_packet(unsigned char dest, unsigned long clockData, unsigned char *info, unsigned char infoLength);
-void find_sync(unsigned char *indat);
+void find_sync(unsigned char *indat, unsigned int inlen);
 
-extern unsigned char RXMASK, RxBit;
+extern unsigned char RXMASK, RxBit, source;
 
 #endif

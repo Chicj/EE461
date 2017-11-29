@@ -26,13 +26,19 @@ void Radio_Interrupt_Setup(void){ // Enable RX interrupts only!  TX interrupt en
 void  Port1_ISR (void) __interrupt[PORT1_VECTOR]{
     //read P1IV to determine which interrupt happened
     //reading automatically resets the flag for the returned state
+    unsigned int i;
     switch(P1IV){
-       case CC2500_GDO0_IV: // [CC2500_GDO0] RX is set up to assert when RX FIFO is greater than FIFO_THR.  This is an RX function only
-            
-            Radio_Rx();
-            find_sync(RxTemp);
-            P1OUT ^= BIT1;
-        break;
+      case CC2500_GDO0_IV: // [CC2500_GDO0] RX is set up to assert when RX FIFO is greater than FIFO_THR.  This is an RX function only
+        sprintf(UARTBuff,"RX Triggered\r\n");
+        Send_UART(UARTBuff);
+        Radio_Read_Burst_Registers(TI_CCxxx0_RXFIFO, RxTemp, RxThrBytes);
+          for(i=0; i<RxThrBytes; i++){
+            sprintf(UARTBuff,"0x%02x, ",RxTemp[i]);
+            Send_UART(UARTBuff);
+          }
+        find_sync(RxTemp, RxThrBytes);
+        P1OUT ^= BIT1;
+      break;
     // TX state
         case CC2500_GDO2_IV: //[CC2500_GDO2] TX is set up to assert when TX FIFO is above FIFO_THR threshold.            
         break;

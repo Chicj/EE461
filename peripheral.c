@@ -92,14 +92,14 @@ void Send_UART(char * mystring){
 int parse_UART(char *UARTBuff){ 
   if(strcmp(UARTBuff,"tx\r") == 0){
     send_packet(0x01,get_time_tick(),inf,sizeof(inf));
-    sprintf(UARTBuff,"Packet sent at %il\r\n",time_tick);
+    sprintf(UARTBuff,"Packet sent at 0x%x\r\n",time_tick);
     Send_UART(UARTBuff);
     while(!(UCA1IFG & UCTXIFG));
   }
   else if(strcmp(UARTBuff,"status\r") == 0){
     status = Radio_Read_Status(TI_CCxxx0_MARCSTATE);
     state=status&(~(BIT7|BIT6|BIT5));         // get the state of the radio from the full status byte
-    sprintf(UARTBuff,"Radio State: 0x%02x \n\r",state);
+    sprintf(UARTBuff,"Radio State: 0x%02x \r\n",state);
     Send_UART(UARTBuff);
     while(!(UCA1IFG & UCTXIFG));
   }

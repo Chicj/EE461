@@ -177,15 +177,15 @@ void Radio_Rx(void){
       //TODO ADD DECODE HERE 
       status = Radio_Read_Status(TI_CCxxx0_MARCSTATE);
       state=status&(~(BIT7|BIT6|BIT5));                   // get the state of the radio from the full status byte
-      sprintf(UARTBuff,"Radio State: 0x%02x \n\r",state);
+      sprintf(UARTBuff,"Radio State: 0x%02x\r\n",state);
       Send_UART(UARTBuff);
-      sprintf(UARTBuff,"Received Stuff was: \n",RxTemp);
+      sprintf(UARTBuff,"Received Stuff was:\r\n-------begin packet-------\r\n",RxTemp);
       Send_UART(UARTBuff);
       for(i=0; i<sizeof(RxTemp); i++){
         sprintf(UARTBuff,"0x%02x, ",RxTemp[i]);
         Send_UART(UARTBuff);
       }
-      sprintf(UARTBuff,"\n-----end packet-----\n");
+      sprintf(UARTBuff,"\r\n-----end packet-----\r\n");
       Send_UART(UARTBuff);
 }
 
