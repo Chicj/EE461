@@ -38,18 +38,19 @@ void send_packet(unsigned char dest, unsigned long clockData, unsigned char *inf
   sprintf(timeData, "%lu", clockData);
   for(i=0;i<4; i++){
     temp[length] = clockSent << (i*8); 
-    length++;
+    length = length+1;
   }
   for(i=0;i<4; i++){
     temp[length] = clockData << (i*8);
-    length++;
+    length = length+1;
   }
 
   // Insert INFO
   for(i=0;i<infoLength; i++){
     temp[length] = info[i];
-    length++;
+    length = length + 1;
   }
+  
 
   // Insert FCS
   insert_FCS(temp, &length);
@@ -59,7 +60,7 @@ void send_packet(unsigned char dest, unsigned long clockData, unsigned char *inf
   
   // add sync, fill into packet
   packet[0] = sync;
-  for(i=0;i<sizeof(temp);++i){
+  for(i=0;i<length;i++){
     packet[i+1] = temp[i];
   }
 
