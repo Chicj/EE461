@@ -16,7 +16,7 @@
 char status;
 unsigned char TxBuffer[], RxBuffer[70], RxTemp[40];
 unsigned int TxBuffer_Len, TxBufferPos=0, TxBytesRemaining, RxBuffer_Len=0, RxBufferPos=0, RxBytesRemaining, state;
-
+char RXflag = 0, TXflag = 0;
 
 
 /******************************* Fundamental Radio Commands ***********************************/

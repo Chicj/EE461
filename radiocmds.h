@@ -9,6 +9,9 @@
 #ifndef _RADIOCMDS_H
 #define _RADIOCMDS_H
 
+// RX and TX flags
+extern char RXflag, TXflag;
+
 // Transmit power settings
 enum power_level{power1=-55,power2=-30, power3= -28, power4 = -26, power5 = -24, power6 =-22, power7=-20, power8=-18, power9=-16,power10=-14,power11=12, power12=-10, power13=-8, power14=-6, power15=-4, power16=-2, power17=0, power18=1};
 
