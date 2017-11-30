@@ -19,7 +19,7 @@ unsigned char source = 0x1;
 
 // TODO Test this.
 void send_packet(unsigned char dest, unsigned long clockData, unsigned char *info, unsigned char infoLength){
-  unsigned short i, length, FCS;
+  unsigned int i, length, FCS;
   char timeSent[4], timeData[4];
   unsigned char temp[63], packet[64], cntrl;
   unsigned long clockSent;
@@ -49,18 +49,17 @@ void send_packet(unsigned char dest, unsigned long clockData, unsigned char *inf
   for(i=0;i<infoLength; i++){
     temp[length] = info[i];
     length++;
-    Send_UART(UARTBuff);
   }
 
   // Insert FCS
-  insert_FCS(temp, sizeof(temp));
+  insert_FCS(temp, &length);
 
   // Bitstuff
-  bitstuff(temp, sizeof(temp));
+  bitstuff(temp, &length);
   
   // add sync, fill into packet
   packet[0] = sync;
-  for(i=0;i<infoLength;++i){
+  for(i=0;i<sizeof(temp);++i){
     packet[i+1] = temp[i];
   }
 
@@ -72,7 +71,7 @@ void send_packet(unsigned char dest, unsigned long clockData, unsigned char *inf
 }
 
 //TODO test this.
-void insert_FCS(unsigned char *dat, unsigned int datLength){
+void insert_FCS(unsigned char *dat, unsigned int *datLength){
   unsigned int i,n;
   unsigned short SR=0xFFFF;
   unsigned short XORMask;
@@ -83,7 +82,7 @@ void insert_FCS(unsigned char *dat, unsigned int datLength){
   const unsigned short GFLIP=0x8408;
 
   // Send the packet through a shift register, XOR the appropriate elements with the 
-  for(n=0;n<datLength;n++){       //loop through each char
+  for(n=0;n<*datLength;n++){       //loop through each char
     bytemask=0x80;                  //mask to select correct bit
     for(i=0;i<8;i++){               //loop through each bit in dat
       if((dat[n] & bytemask)!=0){
@@ -111,12 +110,13 @@ void insert_FCS(unsigned char *dat, unsigned int datLength){
   }
   
   SR = __bit_reverse_short(~SR);
-  dat[datLength] = SR>>8;
-  dat[datLength+1] = SR;
+  dat[*datLength] = SR>>8;
+  dat[*datLength+1] = SR;
+  *datLength = *datLength+2;
 }
 
 //TODO test this
-void bitstuff(unsigned char *dat, unsigned int len){
+void bitstuff(unsigned char *dat, unsigned int *len){
   unsigned int j,k;
   char m, n, ones;
   unsigned char datmask, scratchmask;
@@ -128,7 +128,7 @@ void bitstuff(unsigned char *dat, unsigned int len){
   ones = 0;               //counter for consecutive ones
   scratchmask = 0x80;     //initialize scratchmask to MSB
 
-  for(j=0;j<len;j++){                                    // counter for dat bytes - search through entire packet
+  for(j=0;j<*len;j++){                                    // counter for dat bytes - search through entire packet
     datmask = 0x80;                                       // initialize datmask to MSB
     for(m=0;m<8;m++){                                     // shift through every bit in dat[j]
       if(ones == 5){                                      // if we had 5 ones
@@ -176,6 +176,8 @@ void bitstuff(unsigned char *dat, unsigned int len){
       datmask = datmask>>1;                               // shift to look at next bit
     }
   }
+
+  *len = k;
 }
 
 /************************************* Receive Commands ********************************************/
