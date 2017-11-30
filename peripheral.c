@@ -53,6 +53,18 @@ void Radio_SPI_setup(void){
    DecrementVcore();
    DecrementVcore();
    DecrementVcore();
+   
+   /********** ACLK 10 MHz Setup ***************/
+   
+IncrementVcore();
+IncrementVcore();
+IncrementVcore();  
+UCSCTL1 = DCORSEL_4;
+UCSCTL2 = 304; 
+UCSCTL3 = FLLREFDIV_0+SELREF_2; 
+UCSCTL4 = SELA_4; 
+P11SEL |= BIT0;
+P11DIR |= BIT0;
   
   /*// (default SELREF for FLLREFCLK is XT1CLK = 32*1024 = 32768 Hz = 32.768 KHz)
   UCSCTL2 = 511;                          // Setting the freq multiplication factor * 32768 for final clk freq @ 16744448 Hz
