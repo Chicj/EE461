@@ -42,7 +42,8 @@ void  Port1_ISR (void) __interrupt[PORT1_VECTOR]{
         find_sync(RxTemp, RxThrBytes);
         P1OUT ^= BIT1;
 
-        if(RXflag == 2){
+        if(RXflag == 1){
+          Radio_Strobe(TI_CCxxx0_SFRX);                 // flush the RX FIFO
           Radio_Strobe(TI_CCxxx0_SRX);                  //put CC2500 in Rx mode
           RXflag = 0;
         }
@@ -51,9 +52,13 @@ void  Port1_ISR (void) __interrupt[PORT1_VECTOR]{
       case CC2500_GDO2_IV: //[CC2500_GDO2] TX is set up to assert when TX FIFO is above FIFO_THR threshold.            
         TXflag++;// increment TXflag
 
-        if(TXflag == 2){
+        if(TXflag == 1){
+          Radio_Strobe(TI_CCxxx0_SFTX);                 //flush the TX FIFO
           Radio_Strobe(TI_CCxxx0_SRX);                  //put CC2500 in Rx mode at the end of TX
-          RXflag = 0;
+          __delay_cycles(16000);
+          sprintf(UARTBuff,"Radio Status: 0x%x \r\n",Radio_Read_Status(TI_CCxxx0_MARCSTATE));
+          Send_UART(UARTBuff);
+          TXflag = 0;
         }
       break;
       default: 

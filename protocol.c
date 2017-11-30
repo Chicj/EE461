@@ -19,7 +19,7 @@ unsigned char source = 0x1;
 
 // TODO Test this.
 void send_packet(unsigned char dest, unsigned long clockData, unsigned char *info, unsigned char infoLength){
-  unsigned int i, length, FCS;
+  unsigned int i, length = 0, FCS;
   char timeSent[4], timeData[4];
   unsigned char temp[63], packet[64], cntrl;
   unsigned long clockSent;
@@ -63,10 +63,11 @@ void send_packet(unsigned char dest, unsigned long clockData, unsigned char *inf
   for(i=0;i<length;i++){
     packet[i+1] = temp[i];
   }
+  length = length+1;
 
-  Radio_Write_Register(TI_CCxxx0_PKTLEN, sizeof(packet));                         // Set packet length
+  Radio_Write_Register(TI_CCxxx0_PKTLEN, length);                         // Set packet length
   Radio_Write_Register(TI_CCxxx0_PKTCTRL0, 0x00);                                 // Set to fixed byte mode
-  Radio_Write_Burst_Registers(TI_CCxxx0_TXFIFO, packet, sizeof(packet));          // Write TX data
+  Radio_Write_Burst_Registers(TI_CCxxx0_TXFIFO, packet, length);          // Write TX data
 
   Radio_Strobe(TI_CCxxx0_STX);                                                    // Set radio to transmit
 }
@@ -187,9 +188,9 @@ unsigned char RX_SR17 = 0, datmask, RXFLAG = 0, RXMASK = 0x80, RxBit = 0;
 
 // Unscramble the RX buffer
 // TODO Test this
-void unscramble(unsigned char *indat){
+void unscramble(unsigned char *indat, unsigned int inlen){
 
-  unsigned int j, k, inlen = sizeof(indat);
+  unsigned int j, k;
   unsigned char SR12, newbit;
 
   for(k=0;k<inlen;k++){
