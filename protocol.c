@@ -34,11 +34,11 @@ void send_packet(unsigned char dest, unsigned long clockData, unsigned char *inf
   // Insert TIMESTAMP
   clockSent = get_time_tick();
   for(i=0;i<4; i++){
-    temp[length] = clockSent << (i*8); 
+    temp[length] = clockSent >> (i*8); 
     length = length+1;
   }
   for(i=0;i<4; i++){
-    temp[length] = clockData << (i*8);
+    temp[length] = clockData >> (i*8);
     length = length+1;
   }
 
@@ -62,7 +62,7 @@ void send_packet(unsigned char dest, unsigned long clockData, unsigned char *inf
   }
   TxBuffer_Len = length + 1;                                                // increment length for SYNC
 
-  while(TxBuffer_Len<62){
+  while(TxBuffer_Len<40){
     TxBuffer[TxBuffer_Len] = 0xaa;
     TxBuffer_Len = TxBuffer_Len + 1; 
   }

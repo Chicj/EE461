@@ -31,34 +31,14 @@ void  Port1_ISR (void) __interrupt[PORT1_VECTOR]{
       case CC2500_GDO0_IV:                                                                  // [CC2500_GDO0] RX is set up to assert when RX FIFO is greater than FIFO_THR.  This is an RX function only
         Radio_Read_Burst_Registers(TI_CCxxx0_RXFIFO, RxTemp, RxThrBytes);
         WSN_RX(RxTemp, RxThrBytes);                                                         // The master receive function. It does all.
-        /* NOTE I wrote a command that flushes the radios. Do we need the RX FLAG still?
-        RXflag++;
-        if(RXflag == 1){
-        
-          Radio_Strobe(TI_CCxxx0_SFRX);                 // flush the RX FIFO
-          Radio_Strobe(TI_CCxxx0_SRX);                  //put CC2500 in Rx mode
-          __delay_cycles(16000);
-          sprintf(UARTBuff,"RX Trigger... Status: 0x%x \r\n",Radio_Read_Status(TI_CCxxx0_MARCSTATE));
+        for(i=0; i<RxThrBytes; i++){
+          sprintf(UARTBuff,"0x%02x, ",RxTemp[i]);
           Send_UART(UARTBuff);
-          RXflag = 0;
         }
-        */
       break;
     // TX state
       case CC2500_GDO2_IV:                                                                  //[CC2500_GDO2] TX is set up to assert when TX FIFO is above FIFO_THR threshold.          
         radio_TX_state();
-      /* NOTE I wrote a command that flushes the radios. Do we need the flag still?
-        TXflag++;
-        if(TXflag == 1){
-        
-          Radio_Strobe(TI_CCxxx0_SFTX);                 //flush the TX FIFO
-          Radio_Strobe(TI_CCxxx0_SRX);                  //put CC2500 in Rx mode at the end of TX
-          __delay_cycles(16000);
-          sprintf(UARTBuff,"TX Trigger... Radio Status: 0x%x \r\n",Radio_Read_Status(TI_CCxxx0_MARCSTATE));
-          Send_UART(UARTBuff);
-          TXflag = 0;
-        }
-        */
       break;
       default: 
       break;
@@ -113,6 +93,7 @@ void TIMER_A0_ISR(void)__interrupt[TIMER0_A1_VECTOR]
       P1OUT ^=BIT0;           // blink a led
       TA0CCR1 += 32;          //NOTE ... i think this is what we want... sets increment to 1024 
       time_tick++;            // increment for time info
+      radio_flush();
     break;
     default:
     break;

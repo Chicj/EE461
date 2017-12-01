@@ -16,7 +16,6 @@
 char status;
 unsigned char TxBuffer[512], RxBuffer[70], RxTemp[40];
 unsigned int TxBuffer_Len, TxBufferPos=0, TxBytesRemaining, RxBuffer_Len=0, RxBufferPos=0, RxBytesRemaining, state;
-char RXflag = 0, TXflag = 0;
 
 
 /******************************* Fundamental Radio Commands ***********************************/
@@ -220,7 +219,7 @@ void radio_TX_state(void){                                                      
         state = TX_END;
         Radio_Write_Register(TI_CCxxx0_PKTLEN, TxBuffer_Len);                                 // Pre-program packet length
         Radio_Write_Register(TI_CCxxx0_PKTCTRL0, 0x00);                                       // Fixed byte mode
-        Radio_Write_Burst_Registers(TI_CCxxx0_TXFIFO, TxBuffer+TxBufferPos, TxBuffer_Len);    // Write TX data
+        Radio_Write_Burst_Registers(TI_CCxxx0_TXFIFO, TxBuffer, TxBuffer_Len);    // Write TX data
         TxBufferPos = TxBufferPos+TxBuffer_Len;
       }
       Radio_Strobe(TI_CCxxx0_STX);                                                            // Set radio state to Tx
