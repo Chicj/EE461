@@ -14,14 +14,13 @@
 #include "ISR.h"
 
 /*********************************** Transmit Commands ***********************************/
-unsigned char sync = 0x7E;
-unsigned char source = 0x1;
+unsigned char sync = 0x7E, source = 0x1;
+
 
 // TODO Test this.
 void send_packet(unsigned char dest, unsigned long clockData, unsigned char *info, unsigned char infoLength){
   unsigned int i, length = 0, FCS;
-  char timeSent[4], timeData[4];
-  unsigned char temp[63], packet[64], cntrl;
+  unsigned char temp[64], cntrl;
   unsigned long clockSent;
 
   
@@ -34,8 +33,6 @@ void send_packet(unsigned char dest, unsigned long clockData, unsigned char *inf
 
   // Insert TIMESTAMP
   clockSent = get_time_tick();
-  sprintf(timeSent, "%lu", clockSent);
-  sprintf(timeData, "%lu", clockData);
   for(i=0;i<4; i++){
     temp[length] = clockSent << (i*8); 
     length = length+1;
@@ -59,17 +56,20 @@ void send_packet(unsigned char dest, unsigned long clockData, unsigned char *inf
   bitstuff(temp, &length);
   
   // add sync, fill into packet
-  packet[0] = sync;
+  TxBuffer[0] = sync;
   for(i=0;i<length;i++){
-    packet[i+1] = temp[i];
+    TxBuffer[i+1] = temp[i];
   }
-  length = length + 1;                                                // increment length for SYNC
+  TxBuffer_Len = length + 1;                                                // increment length for SYNC
 
-  Radio_Write_Register(TI_CCxxx0_PKTLEN, length);                         // Set packet length
-  Radio_Write_Register(TI_CCxxx0_PKTCTRL0, 0x00);                     // Set to fixed byte mode
-  Radio_Write_Burst_Registers(TI_CCxxx0_TXFIFO, packet, length);          // Write TX data
+  while(TxBuffer_Len<62){
+    TxBuffer[TxBuffer_Len] = 0xaa;
+    TxBuffer_Len = TxBuffer_Len + 1; 
+  }
 
-  Radio_Strobe(TI_CCxxx0_STX);                                        // Set radio to transmit
+  // put the radio into transmit
+  state = TX_START;
+  radio_TX_state();
 }
 
 //TODO test this.
@@ -256,10 +256,13 @@ void untransition(unsigned char *indat){
 
 // Find the syncs within the RX buffer, and also unstuff the extra zeros!
 // TODO Test this
-void find_sync(unsigned char *indat, unsigned int inlen){
+void WSN_RX(unsigned char *indat, unsigned int inlen){
   unsigned char temp[64];
   unsigned int i,j,k,tempLength=0;
-  
+
+  sprintf(UARTBuff,"RX Interrupt Triggered\r\n");
+  Send_UART(UARTBuff);
+
   for(k=0;k<inlen;k++){
   datmask = 0x80;
     for(j=0;j<8;j++){
@@ -410,16 +413,16 @@ void find_sync(unsigned char *indat, unsigned int inlen){
           }
           insert_FCS(temp, &tempLength);
           if(temp == RxBuffer){
-            sprintf(UARTBuff,"FCS was correct, sucesfful packet\r\n");
+            sprintf(UARTBuff,"FCS was correct, sucessful packet\r\n");
             Send_UART(UARTBuff);
           } else {
-            sprintf(UARTBuff,"FCS was not correct, unsuccesful packet\r\n");
+            sprintf(UARTBuff,"FCS was not correct, unsucessful packet\r\n");
             Send_UART(UARTBuff);
           }
           RxBuffer_Len = RxBufferPos;
           RXFLAG = 0;
           ones = 0;
-
+          radio_flush();
         break;
       }
       datmask = datmask>>1;

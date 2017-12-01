@@ -14,7 +14,7 @@
 #include "protocol.h"
 
 char status;
-unsigned char TxBuffer[], RxBuffer[70], RxTemp[40];
+unsigned char TxBuffer[512], RxBuffer[70], RxTemp[40];
 unsigned int TxBuffer_Len, TxBufferPos=0, TxBytesRemaining, RxBuffer_Len=0, RxBufferPos=0, RxBytesRemaining, state;
 char RXflag = 0, TXflag = 0;
 
@@ -179,6 +179,7 @@ void radio_flush(void){
   // Check for RX FIFO overflow
   if (Radio_Read_Status(TI_CCxxx0_MARCSTATE) == 0x11){
     Radio_Strobe(TI_CCxxx0_SFRX);
+    Radio_Strobe(TI_CCxxx0_SRX);
     __delay_cycles(16000);
     sprintf(UARTBuff,"Overflow Error, RX FIFO flushed, radio state now: 0x%x \r\n",Radio_Read_Status(TI_CCxxx0_MARCSTATE));
     Send_UART(UARTBuff);
@@ -190,6 +191,65 @@ void radio_flush(void){
     __delay_cycles(16000);
     sprintf(UARTBuff,"Radio went idle, reset to RX, radio state now: 0x%x \r\n",Radio_Read_Status(TI_CCxxx0_MARCSTATE));
     Send_UART(UARTBuff);
+  }
+}
+
+// Function to deal with the various TX states
+void radio_TX_state(void){                                                                      // Disable TX interrupt so we don't interrupt ourselves
+  switch(state){
+    case IDLE:
+    break;
+    case TX_START:
+      TxBufferPos = 0;
+      TxBytesRemaining = TxBuffer_Len;
+      radio_flush();
+      if(TxBytesRemaining > 64){
+        if(TxBytesRemaining > 256){
+          Radio_Write_Register(TI_CCxxx0_PKTLEN, (TxBuffer_Len % 256));                       // Pre-program the packet length
+          Radio_Write_Register(TI_CCxxx0_PKTCTRL0, 0x02);                                     // Infinite byte mode
+        } else {
+          Radio_Write_Register(TI_CCxxx0_PKTLEN, TxBuffer_Len);                               // Pre-program packet length
+          Radio_Write_Register(TI_CCxxx0_PKTCTRL0, 0x00);                                     // Fixed byte mode
+        }
+        TxBytesRemaining = TxBytesRemaining - 64;
+        state = TX_RUNNING;
+        Radio_Write_Burst_Registers(TI_CCxxx0_TXFIFO, TxBuffer+TxBufferPos, 64);              // Write first 64 TX data bytes to TX FIFO
+        TxBufferPos = TxBufferPos + 64;
+      } else {
+        TxBytesRemaining = 0;
+        state = TX_END;
+        Radio_Write_Register(TI_CCxxx0_PKTLEN, TxBuffer_Len);                                 // Pre-program packet length
+        Radio_Write_Register(TI_CCxxx0_PKTCTRL0, 0x00);                                       // Fixed byte mode
+        Radio_Write_Burst_Registers(TI_CCxxx0_TXFIFO, TxBuffer+TxBufferPos, TxBuffer_Len);    // Write TX data
+        TxBufferPos = TxBufferPos+TxBuffer_Len;
+      }
+      Radio_Strobe(TI_CCxxx0_STX);                                                            // Set radio state to Tx
+    break;
+    case TX_RUNNING:
+      if(TxBytesRemaining > TxThrBytes){
+         TxBytesRemaining = TxBytesRemaining - TxThrBytes;
+         state = TX_RUNNING;
+         Radio_Write_Burst_Registers(TI_CCxxx0_TXFIFO, TxBuffer+TxBufferPos, TxThrBytes);
+         TxBufferPos += TxThrBytes;
+      } else {
+         TxBytesRemaining = 0;
+         state = TX_END;
+         Radio_Write_Register(TI_CCxxx0_PKTCTRL0, 0x00);                                     // Enter fixed length mode to transmit the last of the bytes
+         Radio_Write_Burst_Registers(TI_CCxxx0_TXFIFO, TxBuffer+TxBufferPos, TxBytesRemaining);
+         TxBufferPos += TxBytesRemaining;
+      }
+    break;
+    case TX_END:
+      while (Radio_Read_Status(TI_CCxxx0_MARCSTATE) == 0x13){                               // wait for end of transmission
+         __delay_cycles(500);
+      }
+
+      Radio_Write_Register(TI_CCxxx0_PKTLEN,0xFF);                                          //Reset PKTLEN
+      Radio_Write_Register(TI_CCxxx0_PKTCTRL0, 0x02);                                       //Reset infinite packet length mode set
+      sprintf(UARTBuff,"TX End\r\n");
+      Send_UART(UARTBuff);
+      radio_flush();
+    break;
   }
 }
 

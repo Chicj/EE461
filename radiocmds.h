@@ -29,13 +29,14 @@ void TI_CC_Wait(unsigned int);
 void radio_flush(void);
 void Write_RF_Settings(void); 
 void Radio_Rx(void);
+void radio_TX_state(void);
 
 void Send_Dummy(void);
 void radio_stream(char *);
 
 //Create event flags for the radio FIFO
-#define TxThrBytes 33   // Tx FIFO   
-#define RxThrBytes 32   // Rx FIFO 
+#define TxThrBytes 30   // Tx FIFO   
+#define RxThrBytes 30   // Rx FIFO 
 
 // ISR state defs for TX_state
 #define IDLE         0
@@ -46,7 +47,7 @@ void radio_stream(char *);
 #define RX_RUNNING   5
 
 // External variables to be used across the project
-extern unsigned char TxBuffer[], RxBuffer[], RxTemp[];
+extern unsigned char TxBuffer[512], RxBuffer[], RxTemp[];
 extern unsigned int TxBuffer_Len, TxBufferPos, TxBytesRemaining, RxBuffer_Len,  RxBufferPos, RxBytesRemaining, state;
 extern char status; // holds radio status
 
