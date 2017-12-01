@@ -63,13 +63,13 @@ void send_packet(unsigned char dest, unsigned long clockData, unsigned char *inf
   for(i=0;i<length;i++){
     packet[i+1] = temp[i];
   }
-  length = length+1;
+  length = length + 1;                                                // increment length for SYNC
 
   Radio_Write_Register(TI_CCxxx0_PKTLEN, length);                         // Set packet length
-  Radio_Write_Register(TI_CCxxx0_PKTCTRL0, 0x00);                                 // Set to fixed byte mode
+  Radio_Write_Register(TI_CCxxx0_PKTCTRL0, 0x00);                     // Set to fixed byte mode
   Radio_Write_Burst_Registers(TI_CCxxx0_TXFIFO, packet, length);          // Write TX data
 
-  Radio_Strobe(TI_CCxxx0_STX);                                                    // Set radio to transmit
+  Radio_Strobe(TI_CCxxx0_STX);                                        // Set radio to transmit
 }
 
 //TODO test this.
@@ -183,8 +183,8 @@ void bitstuff(unsigned char *dat, unsigned int *len){
 }
 
 /************************************* Receive Commands ********************************************/
-unsigned int RX_SR = 0; dump, bit, RX_ST;
-unsigned char RX_SR17 = 0, datmask, RXFLAG = 0, RXMASK = 0x80, RxBit = 0;
+unsigned int RX_SR = 0, dump, bit, RX_ST, remainingBytes = 0;
+unsigned char RX_SR17 = 0, datmask, RXFLAG = 0, RXMASK = 0x80, RxBit = 0, ones = 0;
 
 // Unscramble the RX buffer
 // TODO Test this
@@ -257,10 +257,8 @@ void untransition(unsigned char *indat){
 // Find the syncs within the RX buffer, and also unstuff the extra zeros!
 // TODO Test this
 void find_sync(unsigned char *indat, unsigned int inlen){
-
-  unsigned int i,j,k, ones = 0, remainingBytes;
-  unsigned char firsteight;
-  
+  unsigned char temp[64];
+  unsigned int i,j,k,tempLength=0;
   
   for(k=0;k<inlen;k++){
   datmask = 0x80;
@@ -271,7 +269,6 @@ void find_sync(unsigned char *indat, unsigned int inlen){
           RxBufferPos = 0;
           RXMASK = 0x80;
           RxBit = 0;
-          firsteight = 0;
           dump = 0;
           ones = 0;
           if((indat[k] & datmask) == 0){
@@ -302,10 +299,6 @@ void find_sync(unsigned char *indat, unsigned int inlen){
             }
         break;
         case 8:                               // Found SYNC. Now check the address.
-          if(firsteight == 0){
-            firsteight = 1;
-          }
-
           // Fill first byte into RX Buffer
           if((indat[k] & datmask) != 0){                                //put in one
              RxBuffer[RxBufferPos] = RxBuffer[RxBufferPos] | RXMASK;
@@ -325,24 +318,14 @@ void find_sync(unsigned char *indat, unsigned int inlen){
                 RxBufferPos=RxBufferPos+1;                              // increment to next byte in RxBuffer
                 ones = 0;
                 RXFLAG = 9;
-                firsteight=0;
                 sprintf(UARTBuff,"Address is 0x%x\r\n",RxBuffer[RxBufferPos]);
                 Send_UART(UARTBuff);
-                // NOTE printing beginning of packet here
-                for(i=0; i<5; i++){
-                  sprintf(UARTBuff,"0x%02x, ",RxTemp[i]);
-                  Send_UART(UARTBuff);
-                }
             }
           }
         break;
         case 9:                                                         // Read Packet Length
-          if(firsteight == 0){
-            firsteight = 1;
-          }
-
           // Fill byte into RX Buffer
-          if((indat[k] & datmask) != 0){                                //put in one
+          if((indat[k] & datmask) != 0){                                // put in one
              RxBuffer[RxBufferPos] = RxBuffer[RxBufferPos] | RXMASK;
              ones = ones+1;
           } else {                                                      // put in zero
@@ -355,23 +338,17 @@ void find_sync(unsigned char *indat, unsigned int inlen){
             RxBit=RxBit+1;                                              // increment bit counter for RxBuffer[k]
           } else {                                                      // just processed last bit in RxBuffer[k]
             remainingBytes = (RxBuffer[RxBufferPos])+10;
-            sprintf(UARTBuff,"CNTRL is 0x%x\r\n",RxBuffer[RxBufferPos]);
-            Send_UART(UARTBuff);
-            sprintf(UARTBuff,"packet length is %i bytes\r\n", remainingBytes);
+            sprintf(UARTBuff,"total packet length is %i bytes\r\n", remainingBytes+2);
             Send_UART(UARTBuff);
             RXMASK = 0x80;                                              // reset outdatmask to point to MSB
             RxBit=0;                                                    // reset bit pointer for RxBuffer[k]
             RxBufferPos=RxBufferPos+1;                                  // increment to next byte in RxBuffer
             ones = 0;
             RXFLAG = 10;
-            firsteight=0;
           }
         break;
-        case 10:                                                          // Pull the RX buffer and unstuff
-          if(firsteight == 0) {
-            firsteight = 1;
-          }
-          if((indat[k] & datmask) != 0){                                  //put in one
+        case 10:                                                          // Pull into the RX buffer and unstuff
+          if((indat[k] & datmask) != 0){                                  // put in one
             RxBuffer[RxBufferPos] = RxBuffer[RxBufferPos] | RXMASK;
             ones = ones+1;
             if(RxBit < 7){                                                // if not last bit in RxBuffer[k]
@@ -380,27 +357,45 @@ void find_sync(unsigned char *indat, unsigned int inlen){
             } else {                                                      // just processed last bit in RxBuffer[k]
               RXMASK = 0x80;                                              // reset RXMASK to point to MSB
               RxBit=0;                                                    // reset bit pointer for RxBuffer[k]
-              if(remainingBytes != 0){                          // If didn't receive another FLAG byte, save else dump byte
+              if(remainingBytes != 0){                                    // If we haven't processed the whole packet
                 RxBufferPos=RxBufferPos+1;                                // increment to next byte in RxBuffer
-                remainingBytes = remainingBytes-1;
-              } else {                                                    // Just received END FLAG BYTE
+                remainingBytes = remainingBytes-1;  
+              } else {                                                    // else we're done and can go check FCS
+                sprintf(UARTBuff,"Decoded packet. INFO was:\r\n ----- Begin INFO -----\r\n");
+                Send_UART(UARTBuff);
+                RxBufferPos=RxBufferPos+1;  
                 RXFLAG = 11;
+                for(i=0; i<RxBuffer_Len; i++){
+                  sprintf(UARTBuff,"0x%02x, ",RxBuffer[i]);
+                  Send_UART(UARTBuff);
+                }
+                sprintf(UARTBuff,"\r\n ----- End INFO -----\r\n");
+                Send_UART(UARTBuff);
               }
             }
           } else {                                                        // put in zero, or not if it was a bit stuff zero
             if(ones != 5) {                                               // If not five ones then save the zero and increment
               RxBuffer[RxBufferPos] = RxBuffer[RxBufferPos] & ~RXMASK;
-              if(RxBit < 7){                                                // if not last bit in RxBuffer[k]
-                RXMASK = RXMASK>>1;                                         // shift to next bit in RxBuffer[k]
-                RxBit=RxBit+1;                                              // increment bit counter for RxBuffer[k]
-              } else {                                                      // just processed last bit in RxBuffer[k]
-                RXMASK = 0x80;                                              // reset RXMASK to point to MSB
-                RxBit=0;                                                    // reset bit pointer for RxBuffer[k]
-                if(remainingBytes != 0){                          // If didn't receive another FLAG byte, save else dump byte
-                  RxBufferPos=RxBufferPos+1;                                // increment to next byte in RxBuffer
+              if(RxBit < 7){                                              // if not last bit in RxBuffer[k]
+                RXMASK = RXMASK>>1;                                       // shift to next bit in RxBuffer[k]
+                RxBit=RxBit+1;                                            // increment bit counter for RxBuffer[k]
+              } else {                                                    // just processed last bit in RxBuffer[k]
+                RXMASK = 0x80;                                            // reset RXMASK to point to MSB
+                RxBit=0;                                                  // reset bit pointer for RxBuffer[k]
+                if(remainingBytes != 0){                                  // If we haven't processed the whole packet yet
+                  RxBufferPos=RxBufferPos+1;                              // increment to next byte in RxBuffer
                   remainingBytes = remainingBytes-1;
-                } else {                                                    // Just received END FLAG BYTE
+                } else {                                                  // else we're done and can go check FCS
+                  sprintf(UARTBuff,"Decoded packet. INFO was:\r\n ----- Begin INFO -----\r\n");
+                  Send_UART(UARTBuff);
+                  RxBufferPos=RxBufferPos+1;  
                   RXFLAG = 11;
+                  for(i=0; i<RxBuffer_Len; i++){
+                    sprintf(UARTBuff,"0x%02x, ",RxBuffer[i]);
+                    Send_UART(UARTBuff);
+                  }
+                  sprintf(UARTBuff,"\r\n ----- End INFO -----\r\n");
+                  Send_UART(UARTBuff);
                 }
               }
             } else {                                                      // If five ones then don't save the zero and don't increment
@@ -408,14 +403,23 @@ void find_sync(unsigned char *indat, unsigned int inlen){
             ones = 0;
           }
         break;
-        case 11: // TODO is there anything else that needs to be done here?
+        case 11:                                                          // Check the FCS
+          for(i=0; i < (RxBufferPos-2); i++){
+            temp[i] = RxBuffer[i];
+            tempLength = tempLength +1;
+          }
+          insert_FCS(temp, &tempLength);
+          if(temp == RxBuffer){
+            sprintf(UARTBuff,"FCS was correct, sucesfful packet\r\n");
+            Send_UART(UARTBuff);
+          } else {
+            sprintf(UARTBuff,"FCS was not correct, unsuccesful packet\r\n");
+            Send_UART(UARTBuff);
+          }
           RxBuffer_Len = RxBufferPos;
           RXFLAG = 0;
           ones = 0;
-          for(i=0; i<RxBuffer_Len; i++){
-            sprintf(UARTBuff,"0x%02x, ",RxBuffer[i]);
-            Send_UART(UARTBuff);
-          }
+
         break;
       }
       datmask = datmask>>1;

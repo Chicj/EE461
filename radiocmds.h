@@ -26,6 +26,7 @@ void Radio_Write_Register(char addr, char value);
 void Radio_Write_Burst_Registers(char,unsigned char *, int);
 void Reset_Radio(void);
 void TI_CC_Wait(unsigned int);
+void radio_flush(void);
 void Write_RF_Settings(void); 
 void Radio_Rx(void);
 
@@ -33,8 +34,8 @@ void Send_Dummy(void);
 void radio_stream(char *);
 
 //Create event flags for the radio FIFO
-#define TxThrBytes 33   // Tx and Rx FIFO threshold  
-#define RxThrBytes 32
+#define TxThrBytes 33   // Tx FIFO   
+#define RxThrBytes 32   // Rx FIFO 
 
 // ISR state defs for TX_state
 #define IDLE         0

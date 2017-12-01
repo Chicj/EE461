@@ -15,6 +15,7 @@ void send_packet(unsigned char dest, unsigned long clockData, unsigned char *inf
 void find_sync(unsigned char *indat, unsigned int inlen);
 void unscramble(unsigned char *indat, unsigned int inlen);
 
-extern unsigned char RXMASK, RxBit, source;
+extern unsigned char RXMASK, RxBit, source, ones;
+extern unsigned int remainingBytes;
 
 #endif

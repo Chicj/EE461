@@ -30,34 +30,35 @@ void  Port1_ISR (void) __interrupt[PORT1_VECTOR]{
     switch(P1IV){
       case CC2500_GDO0_IV: // [CC2500_GDO0] RX is set up to assert when RX FIFO is greater than FIFO_THR.  This is an RX function only
         RXflag++;
-
-        sprintf(UARTBuff,"RX Triggered\r\n");
         Send_UART(UARTBuff);
         Radio_Read_Burst_Registers(TI_CCxxx0_RXFIFO, RxTemp, RxThrBytes);
-
-          for(i=0; i<RxThrBytes; i++){
-            sprintf(UARTBuff,"0x%02x, ",RxTemp[i]);
-            Send_UART(UARTBuff);
-          }
         find_sync(RxTemp, RxThrBytes);
         P1OUT ^= BIT1;
 
         if(RXflag == 1){
+        /* NOTE I wrote a command that does this for us now.
           Radio_Strobe(TI_CCxxx0_SFRX);                 // flush the RX FIFO
           Radio_Strobe(TI_CCxxx0_SRX);                  //put CC2500 in Rx mode
+          __delay_cycles(16000);
+          sprintf(UARTBuff,"RX Trigger... Status: 0x%x \r\n",Radio_Read_Status(TI_CCxxx0_MARCSTATE));
+          Send_UART(UARTBuff);
+        */
+          radio_flush();
           RXflag = 0;
         }
       break;
     // TX state
       case CC2500_GDO2_IV: //[CC2500_GDO2] TX is set up to assert when TX FIFO is above FIFO_THR threshold.            
-        TXflag++;// increment TXflag
+        TXflag++;
 
         if(TXflag == 1){
+        /* NOTE I wrote a command that does this for us now.
           Radio_Strobe(TI_CCxxx0_SFTX);                 //flush the TX FIFO
           Radio_Strobe(TI_CCxxx0_SRX);                  //put CC2500 in Rx mode at the end of TX
           __delay_cycles(16000);
-          sprintf(UARTBuff,"Radio Status: 0x%x \r\n",Radio_Read_Status(TI_CCxxx0_MARCSTATE));
+          sprintf(UARTBuff,"TX Trigger... Radio Status: 0x%x \r\n",Radio_Read_Status(TI_CCxxx0_MARCSTATE));
           Send_UART(UARTBuff);
+        */
           TXflag = 0;
         }
       break;
@@ -113,7 +114,8 @@ void TIMER_A0_ISR(void)__interrupt[TIMER0_A1_VECTOR]
     case TA0IV_TA0CCR1:       // dont use TA0IV_TA0CCR0 
       P1OUT ^=BIT0;           // blink a led
       TA0CCR1 += 32;          //NOTE ... i think this is what we want... sets increment to 1024 
-      time_tick++;            // increment for time info 
+      time_tick++;            // increment for time info
+      radio_flush();          // run a radio check
     break;
     default:
     break;

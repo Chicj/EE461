@@ -91,9 +91,10 @@ void Send_UART(char * mystring){
 // ADD TERMINAL COMMANDS HERE
 int parse_UART(char *UARTBuff){ 
   if(strcmp(UARTBuff,"tx\r") == 0){
-    send_packet(0x01,get_time_tick(),inf,sizeof(inf));
+    send_packet(0x01,get_time_tick(),inf,23);
     sprintf(UARTBuff,"Packet sent at 0x%x\r\n",time_tick);
     Send_UART(UARTBuff);
+    radio_flush();
     while(!(UCA1IFG & UCTXIFG));
   }
   else if(strcmp(UARTBuff,"status\r") == 0){
