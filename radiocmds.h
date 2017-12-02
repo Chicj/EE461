@@ -26,6 +26,7 @@ void Radio_Write_Register(char addr, char value);
 void Radio_Write_Burst_Registers(char,unsigned char *, int);
 void Reset_Radio(void);
 void TI_CC_Wait(unsigned int);
+void radio_flush(void);
 void Write_RF_Settings(void); 
 void Radio_Rx(void);
 

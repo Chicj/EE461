@@ -209,11 +209,33 @@ void Send_Dummy(void){
   Radio_Strobe(TI_CCxxx0_STX);                                                    // Set radio to transmit
 }
 
-//TODO for testing ? this is easy to see on a VNA
-void radio_stream(char *argv){
+// Function to check and reset radio states
+void radio_flush(void){
+  // Check for TX Underflow
+  if (Radio_Read_Status(TI_CCxxx0_MARCSTATE) == 0x16){
+    Radio_Strobe(TI_CCxxx0_SFTX);
+    Radio_Strobe(TI_CCxxx0_SRX);
+    __delay_cycles(16000);
+    sprintf(UARTBuff,"Underflow Error, TX FIFO flushed, radio state now: 0x%x \r\n",Radio_Read_Status(TI_CCxxx0_MARCSTATE));
+    Send_UART(UARTBuff);
+  }
 
+  // Check for RX FIFO overflow
+  if (Radio_Read_Status(TI_CCxxx0_MARCSTATE) == 0x11){
+    Radio_Strobe(TI_CCxxx0_SFRX);
+    Radio_Strobe(TI_CCxxx0_SRX);
+    __delay_cycles(16000);
+    sprintf(UARTBuff,"Overflow Error, RX FIFO flushed, radio state now: 0x%x \r\n",Radio_Read_Status(TI_CCxxx0_MARCSTATE));
+    Send_UART(UARTBuff);
+  }
 
-
+  // Check for Idle
+  if (Radio_Read_Status(TI_CCxxx0_MARCSTATE) == 0x01){
+    Radio_Strobe(TI_CCxxx0_SRX);
+    __delay_cycles(16000);
+    sprintf(UARTBuff,"Radio went idle, reset to RX, radio state now: 0x%x \r\n",Radio_Read_Status(TI_CCxxx0_MARCSTATE));
+    Send_UART(UARTBuff);
+  }
 }
 
 

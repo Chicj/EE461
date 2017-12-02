@@ -29,37 +29,20 @@ void  Port1_ISR (void) __interrupt[PORT1_VECTOR]{
     unsigned int i;
     switch(P1IV){
       case CC2500_GDO0_IV: // [CC2500_GDO0] RX is set up to assert when RX FIFO is greater than FIFO_THR.  This is an RX function only
-        RXflag++;
-
         sprintf(UARTBuff,"RX Triggered\r\n");
         Send_UART(UARTBuff);
         Radio_Read_Burst_Registers(TI_CCxxx0_RXFIFO, RxTemp, RxThrBytes);
 
-          for(i=0; i<RxThrBytes; i++){
-            sprintf(UARTBuff,"0x%02x, ",RxTemp[i]);
-            Send_UART(UARTBuff);
-          }
+        for(i=0; i<RxThrBytes; i++){
+          sprintf(UARTBuff,"0x%02x, ",RxTemp[i]);
+          Send_UART(UARTBuff);
+        }
         find_sync(RxTemp, RxThrBytes);
         P1OUT ^= BIT1;
-
-        if(RXflag == 1){
-          Radio_Strobe(TI_CCxxx0_SFRX);                 // flush the RX FIFO
-          Radio_Strobe(TI_CCxxx0_SRX);                  //put CC2500 in Rx mode
-          RXflag = 0;
-        }
       break;
     // TX state
       case CC2500_GDO2_IV: //[CC2500_GDO2] TX is set up to assert when TX FIFO is above FIFO_THR threshold.            
-        TXflag++;// increment TXflag
-
-        if(TXflag == 1){
-          Radio_Strobe(TI_CCxxx0_SFTX);                 //flush the TX FIFO
-          Radio_Strobe(TI_CCxxx0_SRX);                  //put CC2500 in Rx mode at the end of TX
-          __delay_cycles(16000);
-          sprintf(UARTBuff,"Radio Status: 0x%x \r\n",Radio_Read_Status(TI_CCxxx0_MARCSTATE));
-          Send_UART(UARTBuff);
-          TXflag = 0;
-        }
+          
       break;
       default: 
       break;
