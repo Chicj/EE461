@@ -9,9 +9,6 @@
 #ifndef _RADIOCMDS_H
 #define _RADIOCMDS_H
 
-// RX and TX flags
-extern char RXflag, TXflag;
-
 // Transmit power settings
 enum power_level{power1=-55,power2=-30, power3= -28, power4 = -26, power5 = -24, power6 =-22, power7=-20, power8=-18, power9=-16,power10=-14,power11=12, power12=-10, power13=-8, power14=-6, power15=-4, power16=-2, power17=0, power18=1};
 
@@ -37,18 +34,10 @@ void radio_stream(char *);
 #define TxThrBytes 33   // Tx and Rx FIFO threshold  
 #define RxThrBytes 32
 
-// ISR state defs for TX_state
-#define IDLE         0
-#define TX_START     1
-#define TX_RUNNING   2
-#define TX_END       3
-#define RX_START     4
-#define RX_RUNNING   5
-
 // External variables to be used across the project
-extern unsigned char TxBuffer[], RxBuffer[], RxTemp[];
-extern unsigned int TxBuffer_Len, TxBufferPos, TxBytesRemaining, RxBuffer_Len,  RxBufferPos, RxBytesRemaining, state;
-extern char status; // holds radio status
+extern unsigned char RxBuffer[], RxTemp[];
+extern unsigned int RxBuffer_Len,  RxBufferPos, RxBytesRemaining, state;
+extern char status;             // holds radio status
 
 /******************************** Radio Registers *****************************************/
 #define TI_CCxxx0_IOCFG2       0x00        // GDO2 output pin configuration

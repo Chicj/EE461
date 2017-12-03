@@ -13,10 +13,9 @@
 #include "peripheral.h"
 #include "protocol.h"
 
+unsigned char RxBuffer[70], RxTemp[40];
+unsigned int RxBuffer_Len=0, RxBufferPos=0, RxBytesRemaining, state;
 char status;
-unsigned char TxBuffer[], RxBuffer[70], RxTemp[40];
-unsigned int TxBuffer_Len, TxBufferPos=0, TxBytesRemaining, RxBuffer_Len=0, RxBufferPos=0, RxBytesRemaining, state;
-char RXflag = 0, TXflag = 0;
 
 
 /******************************* Fundamental Radio Commands ***********************************/
@@ -211,6 +210,11 @@ void Send_Dummy(void){
 
 // Function to check and reset radio states
 void radio_flush(void){
+  // Wait for any current transmission to finish
+  while (Radio_Read_Status(TI_CCxxx0_MARCSTATE) == 0x13){                               // wait for end of transmission
+   __delay_cycles(500);
+  }
+
   // Check for TX Underflow
   if (Radio_Read_Status(TI_CCxxx0_MARCSTATE) == 0x16){
     Radio_Strobe(TI_CCxxx0_SFTX);

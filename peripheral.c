@@ -15,8 +15,6 @@
 #include "pins.h"
 
 char UARTBuff[UARTBuff_Size]; // scratch pad for UART buffer
-unsigned int  TX_state = IDLE;
-//unsigned char inf[23] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17};
 unsigned char inf[19] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13};
 
 /******************************************* SPI  Setup ***************************************/
@@ -90,9 +88,12 @@ void Send_UART(char * mystring){
 
 // ADD TERMINAL COMMANDS HERE
 int parse_UART(char *UARTBuff){ 
+  unsigned int lastTime;
+
   if(strcmp(UARTBuff,"tx\r") == 0){
-    send_packet(0x01,get_time_tick(),inf,19);
-    sprintf(UARTBuff,"Packet sent at 0x%x\r\n",time_tick);
+    lastTime = get_time_tick();
+    send_packet(0x01,lastTime,inf,19);
+    sprintf(UARTBuff,"Packet sent at %lu counts\r\n",lastTime);
     Send_UART(UARTBuff);
     while(!(UCA1IFG & UCTXIFG));
   }

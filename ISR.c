@@ -29,16 +29,11 @@ void  Port1_ISR (void) __interrupt[PORT1_VECTOR]{
     unsigned int i;
     switch(P1IV){
       case CC2500_GDO0_IV: // [CC2500_GDO0] RX is set up to assert when RX FIFO is greater than FIFO_THR.  This is an RX function only
-        sprintf(UARTBuff,"RX Triggered\r\n");
+        sprintf(UARTBuff,"\r\nRX Triggered\r\n");
         Send_UART(UARTBuff);
         Radio_Read_Burst_Registers(TI_CCxxx0_RXFIFO, RxTemp, RxThrBytes);
-
-        for(i=0; i<RxThrBytes; i++){
-          sprintf(UARTBuff,"0x%02x, ",RxTemp[i]);
-          Send_UART(UARTBuff);
-        }
         find_sync(RxTemp, RxThrBytes);
-        P1OUT ^= BIT1;
+        radio_flush();
       break;
     // TX state
       case CC2500_GDO2_IV: //[CC2500_GDO2] TX is set up to assert when TX FIFO is above FIFO_THR threshold.            
@@ -102,27 +97,3 @@ void TIMER_A0_ISR(void)__interrupt[TIMER0_A1_VECTOR]
     break;
    }
 }
-
-
-//*********************************** TIMER A Modified *******************************************************//
-/*
-// I am sure how to integrate data with CCIS PIN that's why put a switch and I don't have any switch to check the code//
-void TimerA_Setup(void){ 
- // enables interrupts on capture mode //P8.1 to give input from board for now a switch, capture both edge of CCI1B/ synchronized/ Int enabled
-  TA0CCTL1 |= CM_3| CCIS_1| SCS| CAP| CCIE;         
-  TA0CTL |= TASSEL__ACLK| ID_1| MC__CONTINUOUS | TACLR;   // use AMCLK--->can use SMCLK |no pre-scaler count mode | clear TAR                   //set ACLK capture point, ACLK = 32.84 kHz,
-}
-
-/*
-ISR called on capture for TACCR0.CCIFG
-*/
-/*
-void TIMER_A0_ISR(void)
-__interrupt[TIMER0_A1_VECTOR]          //flag will be cleared
-{
-unsigned int Tlast = 0;    // when captured last time
-Counts= TA0CCR0 - Tlast;   // Interval
-Tlast=TA0CCR0;             // time stored for next capture
-  
-}
-*/

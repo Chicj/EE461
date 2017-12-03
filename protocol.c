@@ -13,14 +13,16 @@
 #include "peripheral.h"
 #include "ISR.h"
 
-/*********************************** Transmit Commands ***********************************/
-unsigned char sync = 0x7E;
-unsigned char source = 0x1;
+unsigned char sync = 0x7E, source = 0x01;
+unsigned int bit;
+unsigned char datmask, RXFLAG = 0, RXMASK = 0x80, RxBit = 0;
 
-// TODO Test this.
+/*********************************** Transmit Commands ***********************************/
+
+
+
 void send_packet(unsigned char dest, unsigned long clockData, unsigned char *info, unsigned char infoLength){
   unsigned int i, length = 0, FCS;
-  char timeSent[4], timeData[4];
   unsigned char temp[63], packet[64], cntrl;
   unsigned long clockSent;
 
@@ -34,8 +36,6 @@ void send_packet(unsigned char dest, unsigned long clockData, unsigned char *inf
 
   // Insert TIMESTAMP
   clockSent = get_time_tick();
-  sprintf(timeSent, "%lu", clockSent);
-  sprintf(timeData, "%lu", clockData);
   for(i=0;i<4; i++){
     temp[length] = clockSent << (i*8); 
     length = length+1;
@@ -65,20 +65,14 @@ void send_packet(unsigned char dest, unsigned long clockData, unsigned char *inf
   }
   length = length+1;
 
-
-
-  Radio_Write_Register(TI_CCxxx0_PKTLEN, length);                         // Set packet length
+  Radio_Write_Register(TI_CCxxx0_PKTLEN, length);                                 // Set packet length
   Radio_Write_Register(TI_CCxxx0_PKTCTRL0, 0x00);                                 // Set to fixed byte mode
-  Radio_Write_Burst_Registers(TI_CCxxx0_TXFIFO, packet, length);          // Write TX data
+  Radio_Write_Burst_Registers(TI_CCxxx0_TXFIFO, packet, length);                  // Write TX data
 
   Radio_Strobe(TI_CCxxx0_STX);                                                    // Set radio to transmit
-  while (Radio_Read_Status(TI_CCxxx0_MARCSTATE) == 0x13){                               // wait for end of transmission
-     __delay_cycles(500);
-  }
   radio_flush();
 }
 
-//TODO test this.
 void insert_FCS(unsigned char *dat, unsigned int *datLength){
   unsigned int i,n;
   unsigned short SR=0xFFFF;
@@ -90,9 +84,9 @@ void insert_FCS(unsigned char *dat, unsigned int *datLength){
   const unsigned short GFLIP=0x8408;
 
   // Send the packet through a shift register, XOR the appropriate elements with the 
-  for(n=0;n<*datLength;n++){       //loop through each char
-    bytemask=0x80;                  //mask to select correct bit
-    for(i=0;i<8;i++){               //loop through each bit in dat
+  for(n=0;n<*datLength;n++){                                                    //loop through each char
+    bytemask=0x80;                                                              //mask to select correct bit
+    for(i=0;i<8;i++){                                                           //loop through each bit in dat
       if((dat[n] & bytemask)!=0){
         if((SR & BIT0)!=0){
           SR=SR>>1;
@@ -123,13 +117,11 @@ void insert_FCS(unsigned char *dat, unsigned int *datLength){
   *datLength = *datLength+2;
 }
 
-//TODO test this
+// Search through packet bitwise (after flag) for consecutive 1's.  Need to stuff a 0 bit in packet AFTER the fifth consecutive 1.
 void bitstuff(unsigned char *dat, unsigned int *len){
   unsigned int j,k;
   char m, n, ones;
   unsigned char datmask, scratchmask;
-
-  // Search through packet bitwise (after flag) for consecutive 1's.  Need to stuff a 0 bit in packet AFTER the fifth consecutive 1.
 
   n=0;                    //counter for bits in byte
   k=0;                    //counter for bytes
@@ -189,83 +181,12 @@ void bitstuff(unsigned char *dat, unsigned int *len){
 }
 
 /************************************* Receive Commands ********************************************/
-unsigned int RX_SR = 0; dump, bit, RX_ST;
-unsigned char RX_SR17 = 0, datmask, RXFLAG = 0, RXMASK = 0x80, RxBit = 0;
-
-// Unscramble the RX buffer
-// TODO Test this
-void unscramble(unsigned char *indat, unsigned int inlen){
-
-  unsigned int j, k;
-  unsigned char SR12, newbit;
-
-  for(k=0;k<inlen;k++){
-    datmask = 0x80;
-
-    for(j=0;j<8;j++){
-      if((indat[k] & datmask) == 0){        // Grab the current bit in dat[k]
-        bit = 0;
-      } else {
-        bit = 1;
-      }
-      if((RX_SR & 0x0800) == 0){            // Grab the twelfth bit in RX_SR
-        SR12 = 0;
-      } else {
-        SR12 = 1;
-      }
-      newbit = bit ^ (SR12 ^ RX_SR17);      // Unscramble the bit
-      if(newbit == 0){
-        indat[k] = indat[k] & ~datmask;     // put back in the unscrambled bit
-      } else {
-        indat[k] = indat[k] | datmask;
-      }
-      if((RX_SR & 0x8000) == 0){            // set up RX_SR17 for next loop;
-        RX_SR17 = 0;
-      } else {
-        RX_SR17 = 1;
-      }
-      
-      datmask = datmask>>1;                 // shift to next bit in dat[k]
-      
-      RX_SR = RX_SR<<1;                     // shift left
-      if(bit != 0){
-        RX_SR = RX_SR | 0x0001;             // shift in bit (at LSB)
-      } 
-    }    
-  }
-}
-
-// Reverse the transition encoding of the packet. MUST be called after unscramble.
-// TODO Test this
-void untransition(unsigned char *indat){
-
-  unsigned int j, k, inlen = sizeof(indat);
-
-  for(k=0;k<inlen;k++){
-    datmask = 0x80;
-    for(j=0;j<8;j++){
-      if((indat[k] & datmask) == 0){
-        bit = 0;
-      } else {
-        bit = 1;
-      }
-      if(RX_ST == bit){
-        indat[k] = indat[k] | datmask;      // put in 1
-      } else {
-        indat[k] = indat[k] & ~datmask;     // put in 0
-      }
-      RX_ST = bit;
-      datmask = datmask>>1;
-    }  
-  }
-}
 
 // Find the syncs within the RX buffer, and also unstuff the extra zeros!
-// TODO Test this
 void find_sync(unsigned char *indat, unsigned int inlen){
   unsigned int i,j,k, ones = 0, remainingBytes, tempLength;
   unsigned char temp[64];
-  // Doing this because we can't get multiple fetches working
+  // Cheat workaround because we can't get multiple fetches working
   RXFLAG = 0;
     
   for(k=0;k<inlen;k++){
@@ -277,7 +198,6 @@ void find_sync(unsigned char *indat, unsigned int inlen){
           RxBufferPos = 0;
           RXMASK = 0x80;
           RxBit = 0;
-          dump = 0;
           ones = 0;
           if((indat[k] & datmask) == 0){
             RXFLAG = 1;
@@ -326,14 +246,12 @@ void find_sync(unsigned char *indat, unsigned int inlen){
                 RxBufferPos=RxBufferPos+1;                              // increment to next byte in RxBuffer
                 ones = 0;
                 RXFLAG = 9;
-                sprintf(UARTBuff,"Address is 0x%x\r\n",RxBuffer[RxBufferPos]);
-                Send_UART(UARTBuff);
             }
           }
         break;
         case 9:                                                         // Read Packet Length
           // Fill byte into RX Buffer
-          if((indat[k] & datmask) != 0){                                //put in one
+          if((indat[k] & datmask) != 0){                                // put in one
              RxBuffer[RxBufferPos] = RxBuffer[RxBufferPos] | RXMASK;
              ones = ones+1;
           } else {                                                      // put in zero
@@ -419,22 +337,45 @@ void find_sync(unsigned char *indat, unsigned int inlen){
 }
 
 void packetReceived(void){
-  unsigned char temp[64];
+  unsigned char temp[64], packetSource, packetDest;
   unsigned int tempLength = 0, i;
+  unsigned long packetTime, oldTime, delta;
 
+  // grab the packet timestamp
+  packetTime = RxBuffer[2];
+  packetTime = packetTime + (RxBuffer[3] << 2);
+  packetTime = packetTime + (RxBuffer[4] << 4);
+  packetTime = packetTime + (RxBuffer[5] << 6);
+
+  // grab the address
+  packetSource = RxBuffer[0] >> 4;
+  packetDest = RxBuffer[0] && 0xf;
+
+  // check FCS
   for(i=0; i < (RxBufferPos-2); i++){
     temp[i] = RxBuffer[i];
     tempLength = tempLength +1;
   }
   insert_FCS(temp, &tempLength);
-  if((temp[tempLength-2] == RxBuffer[RxBufferPos-2]) && (temp[tempLength-1] == RxBuffer[RxBufferPos-1])){
+  if((temp[tempLength-2] == RxBuffer[RxBufferPos-2]) && (temp[tempLength-1] == RxBuffer[RxBufferPos-1])){     // if the FcS is correct
     sprintf(UARTBuff,"FCS was correct, sucessful packet\r\n");
     Send_UART(UARTBuff);
-  } else {
+    oldTime = setget_time_tick(packetTime);                                                                   // update the timer
+  } else {                                                                                                    // else
     sprintf(UARTBuff,"FCS was not correct, unsucessful packet\r\n");
     Send_UART(UARTBuff);
+    oldTime = get_time_tick();                                                                                // just save the current timer for comparison
   }
-  RxBuffer_Len = RxBufferPos;
+
+  delta = oldTime - packetTime;
+  sprintf(UARTBuff,"Packet Source was 0x%x\r\n", packetSource);
+  Send_UART(UARTBuff);
+  sprintf(UARTBuff,"Packet Destination was 0x%x\r\n", packetDest);
+  Send_UART(UARTBuff);
+  sprintf(UARTBuff,"Packet Timestamp was %lu counts\r\n", packetTime);
+  Send_UART(UARTBuff);
+  sprintf(UARTBuff,"Time Offset was %lu counts\r\n", delta);
+  Send_UART(UARTBuff);
 }
 
   
