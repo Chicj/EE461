@@ -87,17 +87,18 @@ void Send_UART(char * mystring){
 }
 
 // ADD TERMINAL COMMANDS HERE
-int parse_UART(char *UARTBuff){ 
-  unsigned int lastTime;
+int parse_UART(char *UARTBuff){
+  unsigned long timeTemp;
 
   if(strcmp(UARTBuff,"tx\r") == 0){
-    lastTime = get_time_tick();
-    send_packet(0x01,lastTime,inf,19);
-    sprintf(UARTBuff,"Packet sent at %lu counts\r\n",lastTime);
+    timeTemp = get_time_tick();
+    send_packet(0x01,timeTemp,inf,19);
+    radio_flush();
+    sprintf(UARTBuff,"Packet sent at %lu\r\n",timeTemp);
     Send_UART(UARTBuff);
     while(!(UCA1IFG & UCTXIFG));
   }
-  else if(strcmp(UARTBuff,"status\r") == 0){
+  else if((strcmp(UARTBuff,"status\r") == 0)  || (strcmp(UARTBuff,"s\r") == 0)){
     status = Radio_Read_Status(TI_CCxxx0_MARCSTATE);
     state=status&(~(BIT7|BIT6|BIT5));         // get the state of the radio from the full status byte
     sprintf(UARTBuff,"Radio State: 0x%02x \r\n",state);
@@ -110,13 +111,13 @@ int parse_UART(char *UARTBuff){
     Send_UART(UARTBuff);
     while(!(UCA1IFG & UCTXIFG));
   }
-  else if(strcmp(UARTBuff,"reset radio\r") == 0){
+  else if((strcmp(UARTBuff,"reset radio\r") == 0)   || (strcmp(UARTBuff,"r\r") == 0)){
     _DINT();
     Reset_Radio();
     __delay_cycles(800);     // Wait for radio to be ready before writing registers.cc2500.pdf Table 13 indicates a power-on start-up time of 150 us for the crystal to be stable
     Write_RF_Settings();                
     Radio_Strobe(TI_CCxxx0_SRX);                  //Initialize CC2500 in Rx mode
-    P1IFG = 0;          // Clear all flags <-- do this after IES as it will set a BIT2 high (pg 413 family user guide)
+    P1IFG = 0;              // Clear all flags <-- do this after IES as it will set a BIT2 high (pg 413 family user guide)
     _EINT();
     sprintf(UARTBuff,"Radio reset\r\n");
     Send_UART(UARTBuff);
@@ -126,13 +127,13 @@ int parse_UART(char *UARTBuff){
     sprintf(UARTBuff,"COMMAND LIST:\r\ntx\r\nstatus\r\ndummy\r\nreset radio\r\n");
     Send_UART(UARTBuff);
     while(!(UCA1IFG & UCTXIFG));
-  }
+  }  
   else{
     sprintf(UARTBuff,"COMMAND LIST:\r\ntx\r\nstatus\r\ndummy\r\nreset radio\r\n");
     Send_UART(UARTBuff);
     while(!(UCA1IFG & UCTXIFG));
   }
-  //memset(UARTBuff,NULL,UARTBuff_Size);
+  memset(UARTBuff,NULL,UARTBuff_Size);  // clear UARTbuff mem
   return 0;
 }
 //**************************************************************** TIMER A *************************************

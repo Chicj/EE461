@@ -19,7 +19,51 @@ unsigned char datmask, RXFLAG = 0, RXMASK = 0x80, RxBit = 0;
 
 /*********************************** Transmit Commands ***********************************/
 
+void broadcast(unsigned long clockData){
+  unsigned int i, length = 0, FCS;
+  unsigned char temp[63], packet[64], cntrl;
+  unsigned long clockSent;
 
+  
+  cntrl = 0;
+
+  // Insert ADDR, and CNTRL
+  temp[0] = (source << 4) | source;
+  temp[1] = cntrl;
+  length = 2;
+
+  // Insert TIMESTAMP
+  clockSent = get_time_tick();
+
+  for(i=4;i>0; i--){
+    temp[length] = clockSent >> ((i-1)*8); 
+    length = length+1;
+  }
+  for(i=4;i>0; i--){
+    temp[length] = clockData >> ((i-1)*8);
+    length = length+1;
+  }
+
+  // Insert FCS
+  insert_FCS(temp, &length);
+
+  // Bitstuff
+  bitstuff(temp, &length);
+  
+  // add sync, fill into packet
+  packet[0] = sync;
+  for(i=0;i<length;i++){
+    packet[i+1] = temp[i];
+  }
+  length = length+1;
+
+  Radio_Write_Register(TI_CCxxx0_PKTLEN, length);                                 // Set packet length
+  Radio_Write_Register(TI_CCxxx0_PKTCTRL0, 0x00);                                 // Set to fixed byte mode
+  Radio_Write_Burst_Registers(TI_CCxxx0_TXFIFO, packet, length);                  // Write TX data
+
+  Radio_Strobe(TI_CCxxx0_STX);                                                    // Set radio to transmit
+  radio_flush();
+}
 
 void send_packet(unsigned char dest, unsigned long clockData, unsigned char *info, unsigned char infoLength){
   unsigned int i, length = 0, FCS;
@@ -36,12 +80,13 @@ void send_packet(unsigned char dest, unsigned long clockData, unsigned char *inf
 
   // Insert TIMESTAMP
   clockSent = get_time_tick();
-  for(i=0;i<4; i++){
-    temp[length] = clockSent << (i*8); 
+
+  for(i=4;i>0; i--){
+    temp[length] = clockSent >> ((i-1)*8); 
     length = length+1;
   }
-  for(i=0;i<4; i++){
-    temp[length] = clockData << (i*8);
+  for(i=4;i>0; i--){
+    temp[length] = clockData >> ((i-1)*8);
     length = length+1;
   }
 
@@ -343,9 +388,9 @@ void packetReceived(void){
 
   // grab the packet timestamp
   packetTime = RxBuffer[2];
-  packetTime = packetTime + (RxBuffer[3] << 2);
-  packetTime = packetTime + (RxBuffer[4] << 4);
-  packetTime = packetTime + (RxBuffer[5] << 6);
+  packetTime = (packetTime << 8) + RxBuffer[3];
+  packetTime = (packetTime << 8) + RxBuffer[4];
+  packetTime = (packetTime << 8) + RxBuffer[5];
 
   // grab the address
   packetSource = RxBuffer[0] >> 4;
@@ -377,5 +422,6 @@ void packetReceived(void){
   sprintf(UARTBuff,"Time Offset was %lu counts\r\n", delta);
   Send_UART(UARTBuff);
 }
+
 
   
