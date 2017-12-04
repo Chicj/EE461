@@ -36,15 +36,7 @@ void main(void){
 
   P1DIR |= BIT0 | BIT1;                         // Set LED pin DIR
   P1OUT |= BIT0;                                // turn on a LED to indicate power
- 
+
    _EINT();                                    // set global IR enable 
    LPM0;
 }
-
-
-
-// NOTE 
-/*
-Add transmit on a button push ? 
-
-*/

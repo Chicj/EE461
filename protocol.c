@@ -384,7 +384,8 @@ void find_sync(unsigned char *indat, unsigned int inlen){
 void packetReceived(void){
   unsigned char temp[64], packetSource, packetDest;
   unsigned int tempLength = 0, i;
-  unsigned long packetTime, oldTime, delta;
+  unsigned long packetTime, oldTime;
+  long delta;
 
   // grab the packet timestamp
   packetTime = RxBuffer[2];
@@ -419,7 +420,7 @@ void packetReceived(void){
   Send_UART(UARTBuff);
   sprintf(UARTBuff,"Packet Timestamp was %lu counts\r\n", packetTime);
   Send_UART(UARTBuff);
-  sprintf(UARTBuff,"Time Offset was %lu counts\r\n", delta);
+  sprintf(UARTBuff,"Time Offset was %li counts\r\n", delta);
   Send_UART(UARTBuff);
 }
 
