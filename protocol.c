@@ -7,6 +7,7 @@
 #include <msp430f5438a.h>
 #include <msp430.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include "pins.h"
 #include "protocol.h"
 #include "radiocmds.h"
@@ -16,7 +17,7 @@
 unsigned char sync = 0x7E, source = 0x01;
 unsigned int bit;
 unsigned char datmask, RXFLAG = 0, RXMASK = 0x80, RxBit = 0;
-
+long delta_sum=0,delta_avg = 0,Rxcounter=0;
 /*********************************** Transmit Commands ***********************************/
 
 void broadcast(unsigned long clockData){
@@ -406,7 +407,11 @@ void packetReceived(void){
   if((temp[tempLength-2] == RxBuffer[RxBufferPos-2]) && (temp[tempLength-1] == RxBuffer[RxBufferPos-1])){     // if the FcS is correct
     sprintf(UARTBuff,"FCS was correct, sucessful packet\r\n");
     Send_UART(UARTBuff);
+    Rxcounter++;
     oldTime = setget_time_tick(packetTime);                                                                   // update the timer
+    delta_sum += abs(oldTime - packetTime);
+    delta_avg = delta_sum /Rxcounter;
+    
   } else {                                                                                                    // else
     sprintf(UARTBuff,"FCS was not correct, unsucessful packet\r\n");
     Send_UART(UARTBuff);
