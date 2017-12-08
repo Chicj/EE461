@@ -91,10 +91,10 @@ void TIMER_A0_ISR(void)__interrupt[TIMER0_A1_VECTOR]
   switch(TA0IV){
     case TA0IV_TA0CCR1:       // dont use TA0IV_TA0CCR0 
       P1OUT ^=BIT0;           // blink a led
-      TA0CCR1 += 1000;          //NOTE ... i think this is what we want... sets increment to 1024 
+      TA0CCR1 += 500;          //NOTE ... i think this is what we want... sets increment to 1024 
       time_tick++;            // increment for time info 
 
-      /*if((time_tick % 200) == 0){
+      if((time_tick % 200) == 0){
         unsigned long timeTemp=0;
   
         timeTemp = get_time_tick();
@@ -103,7 +103,7 @@ void TIMER_A0_ISR(void)__interrupt[TIMER0_A1_VECTOR]
         sprintf(UARTBuff,"Packet sent at %li\r\n",timeTemp);
         Send_UART(UARTBuff);
         while(!(UCA1IFG & UCTXIFG));
-      }*/
+      }
     break;
     default:
     break;

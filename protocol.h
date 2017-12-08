@@ -16,6 +16,7 @@ void find_sync(unsigned char *indat, unsigned int inlen);
 void packetReceived(void);
 
 extern unsigned char RXMASK, RxBit, source, sync;
+extern long delta_sum,delta_avg,Rxcounter;
 
 // Define the possible roles of the node and the corresponding address
 #define CH0 = 0x00;

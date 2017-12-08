@@ -123,13 +123,13 @@ int parse_UART(char *UARTBuff){
     Send_UART(UARTBuff);
     while(!(UCA1IFG & UCTXIFG));
   }
-  else if(strcmp(UARTBuff,"help\r") == 0){
-    sprintf(UARTBuff,"COMMAND LIST:\r\ntx\r\nstatus\r\ndummy\r\nreset radio\r\n");
+    else if((strcmp(UARTBuff,"delta avg\r") == 0)  || (strcmp(UARTBuff,"d\r") == 0)){
+    sprintf(UARTBuff,"\r\nThe rolling average of deviation is %li\r\nFor %li sucessful Rx",delta_avg,Rxcounter);
     Send_UART(UARTBuff);
     while(!(UCA1IFG & UCTXIFG));
-  }  
+  }   
   else{
-    sprintf(UARTBuff,"COMMAND LIST:\r\ntx\r\nstatus\r\ndummy\r\nreset radio\r\n");
+    sprintf(UARTBuff,"COMMAND LIST:\r\ntx\r\nstatus\r\ndummy\r\nreset radio\r\ndelta sum\r\n");
     Send_UART(UARTBuff);
     while(!(UCA1IFG & UCTXIFG));
   }
