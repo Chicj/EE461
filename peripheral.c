@@ -162,11 +162,11 @@ void set_time_tick(unsigned long nt){
 //set current ticker time and return old time
 unsigned long setget_time_tick(unsigned long nt){
   unsigned long tmp;
-  int en = _DINT();                   // disable all interrupts --> GIE = 0 (LOW)
+  int en = _DINT(); // disable all interrupts --> GIE = 0 (LOW)
   tmp=time_tick;
   time_tick=nt;
   if(en){
-  _EINT();                            // enable all interrupts --> GIE = 1 (HIGH)
+  _EINT();          // enable all interrupts --> GIE = 1 (HIGH)
   }
   return tmp;
 }

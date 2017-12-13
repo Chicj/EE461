@@ -403,7 +403,7 @@ void packetReceived(void){
     temp[i] = RxBuffer[i];
     tempLength = tempLength +1;
   }
-  insert_FCS(temp, &tempLength);
+insert_FCS(temp, &tempLength);
   if((temp[tempLength-2] == RxBuffer[RxBufferPos-2]) && (temp[tempLength-1] == RxBuffer[RxBufferPos-1])){     // if the FcS is correct
     sprintf(UARTBuff,"FCS was correct, sucessful packet\r\n");
     Send_UART(UARTBuff);
