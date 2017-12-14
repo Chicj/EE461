@@ -385,7 +385,7 @@ void find_sync(unsigned char *indat, unsigned int inlen){
 void packetReceived(void){
   unsigned char temp[64], packetSource, packetDest;
   unsigned int tempLength = 0, i;
-  unsigned long packetTime, oldTime;
+  unsigned long packetTime, nowTime, interruptTime;
   long delta;
 
   // grab the packet timestamp
@@ -403,22 +403,34 @@ void packetReceived(void){
     temp[i] = RxBuffer[i];
     tempLength = tempLength +1;
   }
-insert_FCS(temp, &tempLength);
+  insert_FCS(temp, &tempLength);
   if((temp[tempLength-2] == RxBuffer[RxBufferPos-2]) && (temp[tempLength-1] == RxBuffer[RxBufferPos-1])){     // if the FcS is correct
     sprintf(UARTBuff,"FCS was correct, sucessful packet\r\n");
     Send_UART(UARTBuff);
     Rxcounter++;
-    oldTime = setget_time_tick(packetTime);                                                                   // update the timer
-    delta_sum += abs(oldTime - packetTime);
-    delta_avg = delta_sum /Rxcounter;
-    
+    if(delta_sum==0){
+      delta_sum=1;
+      nowTime = get_time_tick();                                                                   // update the timer
+      interruptTime = nowTime-RXclock;
+      set_time_tick(packetTime + interruptTime);
+      sprintf(UARTBuff,"interrupt time was %lu\r\n", interruptTime);
+      Send_UART(UARTBuff);
+    } else {
+      nowTime = get_time_tick();                                                                   // update the timer
+      interruptTime = nowTime-RXclock;
+      set_time_tick(packetTime + interruptTime);
+      delta_sum += abs(nowTime - interruptTime - packetTime);
+      delta_avg = delta_sum /Rxcounter;
+      sprintf(UARTBuff,"interrupt time was %lu\r\n", interruptTime);
+      Send_UART(UARTBuff);
+    }
+
   } else {                                                                                                    // else
     sprintf(UARTBuff,"FCS was not correct, unsucessful packet\r\n");
     Send_UART(UARTBuff);
-    oldTime = get_time_tick();                                                                                // just save the current timer for comparison
   }
 
-  delta = oldTime - packetTime;
+  delta = nowTime - interruptTime - packetTime;
   sprintf(UARTBuff,"Packet Source was 0x%x\r\n", packetSource);
   Send_UART(UARTBuff);
   sprintf(UARTBuff,"Packet Destination was 0x%x\r\n", packetDest);

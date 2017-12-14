@@ -16,6 +16,7 @@
 #include "pins.h"
 
 unsigned long timer=0;
+extern unsigned char mainFlag;
 
 
 void main(void){
@@ -33,10 +34,28 @@ void main(void){
   UART_INIT();                                  // UART is set to 460800 baud | odd parity| LSB| 8 bit| one stop bit
   TimerA_Setup();                               // Start an ACLK fed TIMERA capture compare 
   Send_UART("EE646 WSN code.\r\n");
+  mainFlag = 0;
 
   P1DIR |= BIT0 | BIT1;                         // Set LED pin DIR
   P1OUT |= BIT0;                                // turn on a LED to indicate power
 
    _EINT();                                    // set global IR enable 
-   LPM0;
+   
+   while(1){
+   
+     if(mainFlag==1){
+       if((time_tick % 500) == 0){
+          unsigned long timeTemp=0;
+          timeTemp = get_time_tick();
+          send_packet(0x01,timeTemp,inf,19);
+          sprintf(UARTBuff,"Packet sent at %li\r\n",timeTemp);
+          Send_UART(UARTBuff);
+          while(!(UCA1IFG & UCTXIFG));
+          radio_flush();
+          mainFlag = 0;
+      }
+    }
+    
+  }
+
 }

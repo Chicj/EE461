@@ -9,5 +9,6 @@ void Radio_Interrupt_Setup(void); // Enable RX interrupts only!  TX interrupt en
 void TimerA_Setup(void);          // Setup timer interrupt 
 
 extern unsigned long timerA;
+extern unsigned long RXclock;
 
 #endif

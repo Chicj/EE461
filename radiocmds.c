@@ -211,8 +211,8 @@ void Send_Dummy(void){
 // Function to check and reset radio states
 void radio_flush(void){
   // Wait for any current transmission to finish
-  while (Radio_Read_Status(TI_CCxxx0_MARCSTATE) == 0x13){                               // wait for end of transmission
-   __delay_cycles(500);
+  if (Radio_Read_Status(TI_CCxxx0_MARCSTATE) == 0x13){                               // wait for end of transmission
+   __delay_cycles(16000);
   }
 
   // Check for TX Underflow

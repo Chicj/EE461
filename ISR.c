@@ -15,6 +15,8 @@
 #include "pins.h"
 #include "protocol.h"
 
+unsigned long RXclock;
+
 
 void Radio_Interrupt_Setup(void){ // Enable RX interrupts only!  TX interrupt enabled in TX Start
   // Use GDO0 and GDO2 as interrupts to control TX/RX of radio
@@ -32,6 +34,7 @@ void  Port1_ISR (void) __interrupt[PORT1_VECTOR]{
       case CC2500_GDO0_IV: // [CC2500_GDO0] RX is set up to assert when RX FIFO is greater than FIFO_THR.  This is an RX function only
         sprintf(UARTBuff,"\r\nRX Triggered\r\n");
         Send_UART(UARTBuff);
+        RXclock = get_time_tick();
         Radio_Read_Burst_Registers(TI_CCxxx0_RXFIFO, RxTemp, RxThrBytes);
         find_sync(RxTemp, RxThrBytes);
         radio_flush();
@@ -80,31 +83,18 @@ void UART_IR(void) __interrupt[USCI_A1_VECTOR]{
 }
 
 //******************************************************************* TIMER A *********************************************************
+unsigned char mainFlag;
+
 void TimerA_Setup(void){ 
-  TA0CTL |= TASSEL_2|MC_2|TACLR;   // use SMCLK | count mode | clear TAR
-  TA0CCTL1 |= CCIE;                // enables interrupts on capture compare mode 
-  TA0CCR1 = 10;                     //
+  TA0CTL |= TASSEL_2|MC_1|TACLR;   // use SMCLK | count mode | clear TAR | Interrupt enable
+  TA0CCTL0 |= CCIE;                // enables interrupts on capture compare mode 
+  TA0CCR0 = 10000;                     //
 }
 
-void TIMER_A0_ISR(void)__interrupt[TIMER0_A1_VECTOR]
-{
-  switch(TA0IV){
-    case TA0IV_TA0CCR1:       // dont use TA0IV_TA0CCR0 
+void TIMER_A0_ISR(void)__interrupt[TIMER0_A0_VECTOR]{
       P1OUT ^=BIT0;           // blink a led
       time_tick++;            // increment for time info 
+      
+      mainFlag=1;
 
-      /*if((time_tick % 20) == 0){
-        unsigned long timeTemp=0;
-  
-        timeTemp = get_time_tick();
-        send_packet(0x01,timeTemp,inf,19);
-        //radio_flush();
-        sprintf(UARTBuff,"Packet sent at %li\r\n",timeTemp);
-        Send_UART(UARTBuff);
-        while(!(UCA1IFG & UCTXIFG));
-      }*/
-    break;
-    default:
-    break;
-   }
 }
